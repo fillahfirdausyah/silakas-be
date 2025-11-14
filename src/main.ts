@@ -1,3 +1,4 @@
+import * as express from 'express';
 import {
     HttpException,
     HttpStatus,
@@ -63,8 +64,8 @@ async function bootstrap() {
 
     // Swagger OpenAPI
     const swaggerConfig = new DocumentBuilder()
-        .setTitle('Movora Backend API')
-        .setDescription('Movora Health Backend API')
+        .setTitle('Elitera Backend API')
+        .setDescription('Elitera  Backend API')
         .addBearerAuth(
             {
                 type: 'http',
@@ -84,6 +85,14 @@ async function bootstrap() {
             persistAuthorization: true,
         },
     });
+
+    // Health Check
+    (app.getHttpAdapter().getInstance() as express.Express).get(
+        '/health',
+        async (_req, res) => {
+            res.status(200).send('OK');
+        },
+    );
 
     await app.listen(configService.get('PORT'));
 }
