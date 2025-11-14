@@ -7,8 +7,8 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ValidationError } from 'class-validator';
 import { AppModule } from './app.module';
+import { ValidationError } from 'class-validator';
 
 async function bootstrap() {
     // Initiate App
