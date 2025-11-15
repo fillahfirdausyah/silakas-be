@@ -54,11 +54,15 @@ export class AuthService {
 
     public async login(payload: { email: string; password: string }) {
         try {
-            const user = await this.authRepository.findByEmail(payload.email);
+            const user = await this.authRepository.findByEmail(payload.email, [
+                'role',
+            ]);
 
             if (!user) {
                 throw new UnauthorizedException('Invalid credentials.');
             }
+
+            console.log(user);
 
             const isPasswordValid = await this.comparePassword(
                 payload.password,
@@ -73,7 +77,7 @@ export class AuthService {
                 id: user.id,
                 name: user.fullName,
                 email: user.email,
-                roles: [],
+                role: user.role.slug,
             });
 
             return {
@@ -115,14 +119,14 @@ export class AuthService {
         id: string;
         email: string;
         name: string;
-        roles: string[];
+        role: string;
     }) {
         try {
             const payload = {
                 id: user.id,
                 email: user.email,
                 name: user.name,
-                roles: user.roles,
+                role: user.role,
             };
 
             const [accessToken, refreshToken] = await Promise.all([

@@ -16,9 +16,10 @@ export class AuthRepository {
         return this.repository.save(user);
     }
 
-    findByEmail(email: string) {
+    findByEmail(email: string, relations?: string[]) {
         return this.repository.findOne({
             where: { email },
+            relations,
         });
     }
 
