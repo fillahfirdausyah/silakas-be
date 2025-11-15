@@ -1,5 +1,7 @@
-import { Column, Entity, Index } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
 import { BaseEntity } from './base.entity';
+
+import { UserEntity } from './user.entity';
 
 @Entity('roles')
 export class RoleEntity extends BaseEntity {
@@ -9,7 +11,6 @@ export class RoleEntity extends BaseEntity {
         unique: true,
         nullable: false,
     })
-    @Index()
     name: string;
 
     @Column({
@@ -25,4 +26,7 @@ export class RoleEntity extends BaseEntity {
         nullable: false,
     })
     description: string;
+
+    @OneToMany(() => UserEntity, (user) => user.role)
+    users: UserEntity[];
 }

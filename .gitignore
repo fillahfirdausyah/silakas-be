@@ -3,6 +3,18 @@
 /node_modules
 /build
 
+# Vscode
+/.vscode
+
+# Forge
+forge.yaml
+
+# Credentials
+/credential
+
+# Migrations
+/typeorm/migrations
+
 # Logs
 logs
 *.log
@@ -14,6 +26,9 @@ lerna-debug.log*
 
 # OS
 .DS_Store
+
+# Storage
+/public
 
 # Tests
 /coverage

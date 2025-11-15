@@ -1,5 +1,7 @@
-import { Column, Entity, Index } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from './base.entity';
+
+import { RoleEntity } from './role.entity';
 
 @Entity('users')
 export class UserEntity extends BaseEntity {
@@ -9,7 +11,6 @@ export class UserEntity extends BaseEntity {
         unique: true,
         nullable: false,
     })
-    @Index()
     fullName: string;
 
     @Column({
@@ -18,7 +19,6 @@ export class UserEntity extends BaseEntity {
         unique: true,
         nullable: false,
     })
-    @Index()
     email: string;
 
     @Column({
@@ -27,4 +27,8 @@ export class UserEntity extends BaseEntity {
         nullable: false,
     })
     password: string;
+
+    @ManyToOne(() => RoleEntity, (role) => role.users)
+    @JoinColumn({ name: 'role_id' })
+    role: RoleEntity;
 }
