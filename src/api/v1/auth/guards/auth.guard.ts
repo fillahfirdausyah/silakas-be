@@ -26,6 +26,8 @@ export class AuthGuard implements CanActivate {
         const requiredPermissions =
             this.reflector.get<string[]>('permissions', context.getHandler()) ||
             [];
+        const requiredRoles =
+            this.reflector.get<string[]>('roles', context.getHandler()) || [];
 
         // Validate authorization bearer
         const token = this.extractTokenFromHeader(request);
@@ -44,6 +46,7 @@ export class AuthGuard implements CanActivate {
             });
 
             request['userId'] = payload.id;
+            request['role'] = payload.role;
         } catch (error) {
             this.logger.error(`JWT verification failed: ${error}`);
             throw new HttpException(
@@ -57,7 +60,7 @@ export class AuthGuard implements CanActivate {
         // Validate permission
         if (requiredPermissions.length > 0) {
             const isPermissionMatch = requiredPermissions.some((permission) =>
-                request['permissions'].includes(permission),
+                (request['permissions'] ?? []).includes(permission),
             );
 
             if (!isPermissionMatch) {
@@ -68,6 +71,18 @@ export class AuthGuard implements CanActivate {
                     HttpStatus.FORBIDDEN,
                 );
             }
+        }
+
+        if (
+            requiredRoles.length > 0 &&
+            !requiredRoles.includes(request['role'])
+        ) {
+            throw new HttpException(
+                {
+                    message: 'Forbidden access, invalid role',
+                },
+                HttpStatus.FORBIDDEN,
+            );
         }
 
         return true;

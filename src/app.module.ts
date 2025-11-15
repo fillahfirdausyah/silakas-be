@@ -5,6 +5,7 @@ import { DataSource } from 'typeorm';
 import appConfig from './config/app.config';
 
 import { AuthModule } from './api/v1/auth/auth.module';
+import { UsersModule } from './api/v1/users/users.module';
 
 @Module({
     imports: [
@@ -49,6 +50,7 @@ import { AuthModule } from './api/v1/auth/auth.module';
 
         // Module
         AuthModule,
+        UsersModule,
     ],
 })
 export class AppModule {}
