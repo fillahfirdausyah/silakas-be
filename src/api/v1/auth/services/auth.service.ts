@@ -62,8 +62,6 @@ export class AuthService {
                 throw new UnauthorizedException('Invalid credentials.');
             }
 
-            console.log(user);
-
             const isPasswordValid = await this.comparePassword(
                 payload.password,
                 user.password,
@@ -86,6 +84,7 @@ export class AuthService {
                         id: user.id,
                         email: user.email,
                         fullName: user.fullName,
+                        authority: [user.role.slug],
                     },
                     accessToken: tokens.accessToken,
                     refreshToken: tokens.refreshToken,

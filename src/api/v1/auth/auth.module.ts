@@ -9,10 +9,12 @@ import { AuthRepository } from './repositories/auth.repository';
 
 import { UserEntity } from '../../../entities/user.entity';
 import { RoleEntity } from '../../../entities/role.entity';
+import { DocumentEntity } from '../../../entities/document.entity';
+import { CaseTypeEntity } from '../../../entities/case-type.entity';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([UserEntity, RoleEntity]),
+        TypeOrmModule.forFeature([UserEntity, RoleEntity, DocumentEntity, CaseTypeEntity]),
         JwtModule.registerAsync({
             imports: [ConfigModule],
             inject: [ConfigService],

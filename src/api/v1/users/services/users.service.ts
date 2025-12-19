@@ -17,13 +17,20 @@ export class UsersService {
     private logger = new Logger(UsersService.name);
     constructor(private readonly usersRepository: UsersRepository) {}
 
-    public async findAll() {
+    public async findAll(metadata: {
+        page: number;
+        limit: number;
+        search: string;
+        sortBy: string;
+        sortType: string;
+    }) {
         try {
-            const users = await this.usersRepository.findAll();
+            const [users, count] =
+                await this.usersRepository.findByPagination(metadata);
 
-            return {
-                payload: users.map((user) => this.serializeUser(user)),
-            };
+            const maxPages = count > 0 ? Math.ceil(count / metadata.limit) : 1;
+
+            return { payload: { users, metadata: { ...metadata, maxPages } } };
         } catch (error) {
             this.logger.error(error.stack || error);
             handleServiceError(error);

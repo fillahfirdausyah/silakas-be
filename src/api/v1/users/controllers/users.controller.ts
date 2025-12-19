@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Put, UseGuards } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Get,
+    Post,
+    Put,
+    Query,
+    UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { AuthGuard } from '../../auth/guards/auth.guard';
@@ -6,6 +14,7 @@ import { Roles } from '../../../../shared/decorators/roles.decorator';
 import { UsersService } from '../services/users.service';
 import { CreateUserDto } from '../dtos/create-user.dto';
 import { UpdateUserDto } from '../dtos/update-user.dto';
+import { GetUsersDto } from '../dtos/users.dto';
 
 @ApiTags('Users')
 @ApiBearerAuth('BearerAuth')
@@ -18,8 +27,14 @@ export class UsersController {
     constructor(private readonly usersService: UsersService) {}
 
     @Get()
-    async getUsers() {
-        const result = await this.usersService.findAll();
+    async getUsers(@Query() query: GetUsersDto) {
+        const result = await this.usersService.findAll({
+            page: query.page,
+            limit: query.limit,
+            search: query.search,
+            sortBy: query.sortBy,
+            sortType: query.sortType,
+        });
 
         return {
             message: 'Users retrieved successfully',
