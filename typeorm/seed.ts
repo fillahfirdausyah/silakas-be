@@ -1,4 +1,5 @@
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import * as dotenv from 'dotenv';
 
 import { dataSource } from './config';
@@ -27,40 +28,53 @@ async function seed() {
 
     try {
         // Seed role
-        await queryRunner.query(
-            `
-            INSERT INTO
-                roles (id, name, slug, description, created_at, updated_at)
-            VALUES
-                (1, 'Super Admin', 'super-admin', 'Can manage everything', NOW(), NOW()),
-                (2, 'Panitera Pengganti', 'pantera-pengganti', 'Input berkas', NOW(), NOW()),
-                (3, 'Panmud Gugatan', 'panmud-gugatan', 'Input BHT', NOW(), NOW()),
-                (4, 'Panmud Hukum', 'panmud-hukum', 'Input BPS', NOW(), NOW());
-            `,
-        );
+        const roles = [
+            {
+                id: crypto.randomUUID(),
+                name: 'Super Admin',
+                slug: 'super-admin',
+                description: 'Can manage everything',
+            },
+            {
+                id: crypto.randomUUID(),
+                name: 'Panitera Pengganti',
+                slug: 'pantera-pengganti',
+                description: 'Input berkas',
+            },
+            {
+                id: crypto.randomUUID(),
+                name: 'Panmud Gugatan',
+                slug: 'panmud-gugatan',
+                description: 'Input BHT',
+            },
+            {
+                id: crypto.randomUUID(),
+                name: 'Panmud Hukum',
+                slug: 'panmud-hukum',
+                description: 'Input BPS',
+            },
+        ];
+
+        for (const role of roles) {
+            await queryRunner.query(
+                `INSERT INTO roles (id, name, slug, description, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())`,
+                [role.id, role.name, role.slug, role.description],
+            );
+        }
 
         // Seed user
-        await queryRunner.query(
-            `
-            INSERT INTO
-                users (id, fullName, email, password, created_at, updated_at)
-            VALUES
-                (1, '${superAdminName}', '${superAdminEmail}', '${hashedSuperAdminPassword}', NOW(), NOW());
-            `,
-        );
+        const superAdminRole = roles.find((r) => r.slug === 'super-admin');
+        const superAdminId = crypto.randomUUID();
 
         await queryRunner.query(
-            `
-            UPDATE
-                users
-            SET
-                role_id = (
-                    SELECT id FROM roles WHERE slug = 'super-admin'
-                ),
-                updated_at = NOW()
-            WHERE
-                id = 1;
-            `,
+            `INSERT INTO users (id, fullName, email, password, role_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())`,
+            [
+                superAdminId,
+                superAdminName,
+                superAdminEmail,
+                hashedSuperAdminPassword,
+                superAdminRole.id,
+            ],
         );
 
         await queryRunner.commitTransaction();

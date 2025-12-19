@@ -41,7 +41,7 @@ export class UsersRepository {
             take: metadata.limit,
             where,
             order: {
-                [metadata.sortBy]: metadata.sortType,
+                [metadata.sortBy || 'createdAt']: metadata.sortType,
             },
             relations: ['role'],
         };
@@ -75,5 +75,9 @@ export class UsersRepository {
         return this.rolesRepository.findOne({
             where: { id },
         });
+    }
+
+    findAllRoles() {
+        return this.rolesRepository.find();
     }
 }

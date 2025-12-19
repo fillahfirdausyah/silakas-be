@@ -2,6 +2,7 @@ import {
     Body,
     Controller,
     Get,
+    Param,
     Post,
     Put,
     Query,
@@ -38,6 +39,27 @@ export class UsersController {
 
         return {
             message: 'Users retrieved successfully',
+            payload: result.payload,
+            metadata: result.metadata,
+        };
+    }
+
+    @Get('roles')
+    async getRoles() {
+        const result = await this.usersService.findAllRoles();
+
+        return {
+            message: 'Roles retrieved successfully',
+            payload: result.payload,
+        };
+    }
+
+    @Get(':id')
+    async getUser(@Param('id') id: string) {
+        const result = await this.usersService.findOne(id);
+
+        return {
+            message: 'User retrieved successfully',
             payload: result.payload,
         };
     }

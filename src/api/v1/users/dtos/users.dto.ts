@@ -3,6 +3,7 @@ import {
     IsNumber,
     IsOptional,
     IsString,
+    IsNotEmpty,
     Max,
     Min,
 } from 'class-validator';
@@ -28,6 +29,7 @@ export class GetUsersDto {
 
     @IsOptional()
     @IsString()
+    @IsNotEmpty()
     sortBy: string = 'createdAt';
 
     @IsOptional()

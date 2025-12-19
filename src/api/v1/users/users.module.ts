@@ -14,7 +14,12 @@ import { AuthGuard } from '../auth/guards/auth.guard';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([UserEntity, RoleEntity, DocumentEntity, CaseTypeEntity]),
+        TypeOrmModule.forFeature([
+            UserEntity,
+            RoleEntity,
+            DocumentEntity,
+            CaseTypeEntity,
+        ]),
         JwtModule.registerAsync({
             imports: [ConfigModule],
             inject: [ConfigService],
@@ -25,5 +30,6 @@ import { AuthGuard } from '../auth/guards/auth.guard';
     ],
     controllers: [UsersController],
     providers: [UsersService, UsersRepository, AuthGuard],
+    exports: [UsersService, UsersRepository],
 })
 export class UsersModule {}

@@ -3,6 +3,7 @@ import { BaseEntity } from './base.entity';
 
 import { RoleEntity } from './role.entity';
 import { DocumentEntity } from './document.entity';
+import { LawsuitEntity } from './lawsuit.entity';
 
 @Entity('users')
 export class UserEntity extends BaseEntity {
@@ -41,4 +42,13 @@ export class UserEntity extends BaseEntity {
 
     @OneToMany(() => DocumentEntity, (document) => document.hukum)
     hukumDocuments: DocumentEntity[];
+
+    @OneToMany(() => LawsuitEntity, (lawsuit) => lawsuit.pp)
+    ppLawsuits: LawsuitEntity[];
+
+    @OneToMany(() => LawsuitEntity, (lawsuit) => lawsuit.panmudGugatan)
+    gugatanLawsuits: LawsuitEntity[];
+
+    @OneToMany(() => LawsuitEntity, (lawsuit) => lawsuit.panmudHukum)
+    hukumLawsuits: LawsuitEntity[];
 }

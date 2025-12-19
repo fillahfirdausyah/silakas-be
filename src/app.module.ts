@@ -6,6 +6,7 @@ import appConfig from './config/app.config';
 
 import { AuthModule } from './api/v1/auth/auth.module';
 import { UsersModule } from './api/v1/users/users.module';
+import { LawsuitsModule } from './api/v1/lawsuits/lawsuits.module';
 
 @Module({
     imports: [
@@ -51,6 +52,7 @@ import { UsersModule } from './api/v1/users/users.module';
         // Module
         AuthModule,
         UsersModule,
+        LawsuitsModule,
     ],
 })
 export class AppModule {}

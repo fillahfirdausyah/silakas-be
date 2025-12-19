@@ -30,7 +30,34 @@ export class UsersService {
 
             const maxPages = count > 0 ? Math.ceil(count / metadata.limit) : 1;
 
-            return { payload: { users, metadata: { ...metadata, maxPages } } };
+            return {
+                payload: users,
+                metadata: {
+                    page: metadata.page,
+                    limit: metadata.limit,
+                    search: metadata.search,
+                    sortBy: metadata.sortBy,
+                    sortType: metadata.sortType,
+                    maxPages,
+                    total: count,
+                },
+            };
+        } catch (error) {
+            this.logger.error(error.stack || error);
+            handleServiceError(error);
+        }
+    }
+
+    public async findOne(id: string) {
+        try {
+            const user = await this.usersRepository.findById(id);
+            if (!user) {
+                throw new NotFoundException('User not found');
+            }
+
+            return {
+                payload: this.serializeUser(user),
+            };
         } catch (error) {
             this.logger.error(error.stack || error);
             handleServiceError(error);
@@ -111,6 +138,18 @@ export class UsersService {
 
             return {
                 payload: this.serializeUser(updatedUser),
+            };
+        } catch (error) {
+            this.logger.error(error.stack || error);
+            handleServiceError(error);
+        }
+    }
+
+    public async findAllRoles() {
+        try {
+            const roles = await this.usersRepository.findAllRoles();
+            return {
+                payload: roles,
             };
         } catch (error) {
             this.logger.error(error.stack || error);
