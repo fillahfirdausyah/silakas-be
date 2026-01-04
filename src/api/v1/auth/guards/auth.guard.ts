@@ -34,7 +34,7 @@ export class AuthGuard implements CanActivate {
         if (!token) {
             throw new HttpException(
                 {
-                    message: 'Token not provided.',
+                    message: 'Token tidak ditemukan.',
                 },
                 HttpStatus.UNAUTHORIZED,
             );
@@ -51,7 +51,7 @@ export class AuthGuard implements CanActivate {
             this.logger.error(`JWT verification failed: ${error}`);
             throw new HttpException(
                 {
-                    message: 'Unauthorized.',
+                    message: 'Tidak terotorisasi.',
                 },
                 HttpStatus.UNAUTHORIZED,
             );
@@ -66,7 +66,7 @@ export class AuthGuard implements CanActivate {
             if (!isPermissionMatch) {
                 throw new HttpException(
                     {
-                        message: 'Forbidden access, you do not have permission',
+                        message: 'Akses dilarang, Anda tidak memiliki izin',
                     },
                     HttpStatus.FORBIDDEN,
                 );
@@ -75,11 +75,12 @@ export class AuthGuard implements CanActivate {
 
         if (
             requiredRoles.length > 0 &&
-            !requiredRoles.includes(request['role'])
+            !requiredRoles.includes(request['role']) &&
+            request['role'] !== 'super-admin'
         ) {
             throw new HttpException(
                 {
-                    message: 'Forbidden access, invalid role',
+                    message: 'Akses dilarang, role tidak valid',
                 },
                 HttpStatus.FORBIDDEN,
             );

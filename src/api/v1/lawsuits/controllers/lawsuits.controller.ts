@@ -9,6 +9,7 @@ import {
     Req,
     UseGuards,
     StreamableFile,
+    ForbiddenException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
@@ -52,7 +53,7 @@ export class LawsuitsController {
             sortType: query.sortType,
         });
         return {
-            message: 'Lawsuits retrieved successfully',
+            message: 'Berkas gugatan berhasil diambil',
             payload: result.payload,
             metadata: result.metadata,
         };
@@ -62,7 +63,7 @@ export class LawsuitsController {
     async findOne(@Param('id') id: string) {
         const result = await this.lawsuitsService.findOne(id);
         return {
-            message: 'Lawsuit retrieved successfully',
+            message: 'Berkas gugatan berhasil diambil',
             payload: result.payload,
         };
     }
@@ -72,7 +73,7 @@ export class LawsuitsController {
     async create(@Req() req: any, @Body() body: CreateLawsuitDto) {
         const result = await this.lawsuitsService.create(req.userId, body);
         return {
-            message: 'Lawsuit created successfully',
+            message: 'Berkas gugatan berhasil dibuat',
             payload: result.payload,
         };
     }
@@ -95,11 +96,11 @@ export class LawsuitsController {
             result = await this.lawsuitsService.handoverToHukum(id);
         } else {
             // Should be blocked by guard, but safe handling
-            throw new Error('Invalid role for handover');
+            throw new ForbiddenException('Role tidak valid untuk penyerahan');
         }
 
         return {
-            message: 'Lawsuit handover successful',
+            message: 'Berkas gugatan berhasil diserahkan',
             payload: result.payload,
         };
     }
@@ -119,7 +120,7 @@ export class LawsuitsController {
         }
 
         return {
-            message: 'Lawsuit received successfully',
+            message: 'Berkas gugatan berhasil diterima',
             payload: result.payload,
         };
     }
@@ -129,7 +130,7 @@ export class LawsuitsController {
     async update(@Param('id') id: string, @Body() body: UpdateLawsuitDto) {
         const result = await this.lawsuitsService.updateDetails(id, body);
         return {
-            message: 'Lawsuit updated successfully',
+            message: 'Berkas gugatan berhasil diperbarui',
             payload: result.payload,
         };
     }

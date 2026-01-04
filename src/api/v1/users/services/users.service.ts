@@ -52,7 +52,7 @@ export class UsersService {
         try {
             const user = await this.usersRepository.findById(id);
             if (!user) {
-                throw new NotFoundException('User not found');
+                throw new NotFoundException('Pengguna tidak ditemukan');
             }
 
             return {
@@ -72,11 +72,11 @@ export class UsersService {
             ]);
 
             if (existingUser) {
-                throw new ConflictException('Email already in use');
+                throw new ConflictException('Email sudah digunakan');
             }
 
             if (!role) {
-                throw new NotFoundException('Role not found');
+                throw new NotFoundException('Role tidak ditemukan');
             }
 
             const salt = await bcrypt.genSalt(10);
@@ -102,7 +102,7 @@ export class UsersService {
         try {
             const user = await this.usersRepository.findById(payload.id);
             if (!user) {
-                throw new NotFoundException('User not found');
+                throw new NotFoundException('Pengguna tidak ditemukan');
             }
 
             if (payload.email && payload.email !== user.email) {
@@ -110,7 +110,7 @@ export class UsersService {
                     payload.email,
                 );
                 if (emailOwner && emailOwner.id !== user.id) {
-                    throw new ConflictException('Email already in use');
+                    throw new ConflictException('Email sudah digunakan');
                 }
                 user.email = payload.email;
             }
@@ -124,7 +124,7 @@ export class UsersService {
                     payload.roleId,
                 );
                 if (!role) {
-                    throw new NotFoundException('Role not found');
+                    throw new NotFoundException('Role tidak ditemukan');
                 }
                 user.role = role;
             }

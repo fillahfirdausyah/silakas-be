@@ -59,7 +59,7 @@ export class AuthService {
             ]);
 
             if (!user) {
-                throw new UnauthorizedException('Invalid credentials.');
+                throw new UnauthorizedException('Kredensial tidak valid.');
             }
 
             const isPasswordValid = await this.comparePassword(
@@ -68,7 +68,7 @@ export class AuthService {
             );
 
             if (!isPasswordValid) {
-                throw new UnauthorizedException('Invalid credentials.');
+                throw new UnauthorizedException('Kredensial tidak valid.');
             }
 
             const tokens = await this.generateTokens({

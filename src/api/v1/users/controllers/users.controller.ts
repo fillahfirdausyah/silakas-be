@@ -38,7 +38,7 @@ export class UsersController {
         });
 
         return {
-            message: 'Users retrieved successfully',
+            message: 'Pengguna berhasil diambil',
             payload: result.payload,
             metadata: result.metadata,
         };
@@ -49,7 +49,7 @@ export class UsersController {
         const result = await this.usersService.findAllRoles();
 
         return {
-            message: 'Roles retrieved successfully',
+            message: 'Role berhasil diambil',
             payload: result.payload,
         };
     }
@@ -59,7 +59,7 @@ export class UsersController {
         const result = await this.usersService.findOne(id);
 
         return {
-            message: 'User retrieved successfully',
+            message: 'Pengguna berhasil diambil',
             payload: result.payload,
         };
     }
@@ -70,7 +70,7 @@ export class UsersController {
         const result = await this.usersService.createUser(body);
 
         return {
-            message: 'User created successfully',
+            message: 'Pengguna berhasil dibuat',
             payload: result.payload,
         };
     }
@@ -80,7 +80,7 @@ export class UsersController {
         const result = await this.usersService.updateUser(body);
 
         return {
-            message: 'User updated successfully',
+            message: 'Pengguna berhasil diperbarui',
             payload: result.payload,
         };
     }

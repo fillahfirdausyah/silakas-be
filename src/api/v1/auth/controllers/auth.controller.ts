@@ -21,7 +21,7 @@ export class AuthController {
         });
 
         return {
-            message: 'Successfully signed in',
+            message: 'Berhasil masuk',
             payload: result.payload,
         };
     }
