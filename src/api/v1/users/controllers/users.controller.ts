@@ -76,6 +76,7 @@ export class UsersController {
     }
 
     @Put()
+    @Roles('super-admin')
     async updateUser(@Body() body: UpdateUserDto) {
         const result = await this.usersService.updateUser(body);
 

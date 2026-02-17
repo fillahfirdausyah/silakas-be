@@ -1,9 +1,12 @@
 import {
+    ArrayMinSize,
+    IsArray,
     IsDateString,
     IsInt,
     IsNotEmpty,
     IsOptional,
     IsString,
+    IsUUID,
     Matches,
     Min,
 } from 'class-validator';
@@ -38,6 +41,13 @@ export class UpdateLawsuitDto {
     @IsDateString()
     @IsOptional()
     ikrarDate?: string;
+}
+
+export class GenerateExcelDto {
+    @IsArray()
+    @IsUUID('4', { each: true })
+    @ArrayMinSize(1)
+    lawsuitIds: string[];
 }
 
 export class GetLawsuitsDto {

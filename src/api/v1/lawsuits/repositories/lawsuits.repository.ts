@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, ILike } from 'typeorm';
+import { Repository, FindOptionsWhere, ILike, In } from 'typeorm';
 import { LawsuitEntity } from '../../../../entities/lawsuit.entity';
 
 @Injectable()
@@ -56,6 +56,13 @@ export class LawsuitsRepository {
     findByCaseNumber(caseNumber: string) {
         return this.lawsuitsRepository.findOne({
             where: { caseNumber },
+        });
+    }
+
+    findByIds(ids: string[]) {
+        return this.lawsuitsRepository.find({
+            where: { id: In(ids) },
+            relations: ['pp', 'panmudGugatan', 'panmudHukum'],
         });
     }
 

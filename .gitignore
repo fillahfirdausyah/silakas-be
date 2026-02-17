@@ -6,6 +6,8 @@
 # Vscode
 /.vscode
 
+/ai-reports
+
 # Forge
 forge.yaml
 

@@ -18,6 +18,7 @@ import { Roles } from '../../../../shared/decorators/roles.decorator';
 import { LawsuitsService } from '../services/lawsuits.service';
 import {
     CreateLawsuitDto,
+    GenerateExcelDto,
     UpdateLawsuitDto,
     GetLawsuitsDto,
 } from '../dtos/lawsuit.dto';
@@ -42,8 +43,23 @@ export class LawsuitsController {
         });
     }
 
+    @Post('generate')
+    @Roles('panmud-gugatan')
+    async generate(@Body() body: GenerateExcelDto) {
+        const result = await this.lawsuitsService.generateBeritaAcara(body);
+        return new StreamableFile(result.payload as any, {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            disposition: 'attachment; filename="berita-acara-penyerahan.xlsx"',
+        });
+    }
+
     @Get()
-    @Roles('super-admin', 'pantera-pengganti', 'panmud-gugatan', 'panmud-hukum')
+    @Roles(
+        'super-admin',
+        'panitera-pengganti',
+        'panmud-gugatan',
+        'panmud-hukum',
+    )
     async findAll(@Query() query: GetLawsuitsDto) {
         const result = await this.lawsuitsService.findAll({
             page: query.page,
@@ -69,7 +85,7 @@ export class LawsuitsController {
     }
 
     @Post()
-    @Roles('pantera-pengganti')
+    @Roles('panitera-pengganti')
     async create(@Req() req: any, @Body() body: CreateLawsuitDto) {
         const result = await this.lawsuitsService.create(req.userId, body);
         return {
@@ -81,7 +97,7 @@ export class LawsuitsController {
     @Post(':id/handover')
     // Dynamic role check?
     // If I put Roles here, it must be ANY of them.
-    @Roles('pantera-pengganti', 'panmud-gugatan')
+    @Roles('panitera-pengganti', 'panmud-gugatan')
     async handover(@Req() req: any, @Param('id') id: string) {
         const roleSlug = req.role; // AuthGuard sets req['role'] as slug or role object?
         // AuthGuard: request['role'] = payload.role;
@@ -90,7 +106,7 @@ export class LawsuitsController {
         // Assuming slug.
 
         let result;
-        if (roleSlug === 'pantera-pengganti') {
+        if (roleSlug === 'panitera-pengganti') {
             result = await this.lawsuitsService.handoverToGugatan(id);
         } else if (roleSlug === 'panmud-gugatan') {
             result = await this.lawsuitsService.handoverToHukum(id);
