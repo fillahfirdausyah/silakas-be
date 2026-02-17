@@ -38,7 +38,7 @@ async function seed() {
             {
                 id: crypto.randomUUID(),
                 name: 'Panitera Pengganti',
-                slug: 'pantera-pengganti',
+                slug: 'panitera-pengganti',
                 description: 'Input berkas',
             },
             {
