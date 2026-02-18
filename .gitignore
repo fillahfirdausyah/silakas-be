@@ -14,8 +14,6 @@ forge.yaml
 # Credentials
 /credential
 
-# Migrations
-/typeorm/migrations
 
 # Logs
 logs
