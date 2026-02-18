@@ -22,7 +22,10 @@
         "migration:generate": "typeorm-ts-node-commonjs migration:generate -d typeorm/config.ts typeorm/migrations/$npm_config_name",
         "migration:run": "typeorm-ts-node-commonjs migration:run -d typeorm/config.ts -t all",
         "migration:rollback": "typeorm-ts-node-commonjs migration:revert -d typeorm/config.ts",
-        "seeder:run": "ts-node typeorm/seed.ts"
+        "seeder:run": "ts-node typeorm/seed.ts",
+        "migration:generate:prod": "typeorm-ts-node-commonjs migration:generate -d dist/typeorm/config.ts dist/typeorm/migrations/$npm_config_name",
+        "migration:run:prod": "typeorm migration:run -d dist/typeorm/config.js -t all",
+        "seeder:run:prod": "ts-node dist/typeorm/seed.ts"
     },
     "dependencies": {
         "@nestjs/common": "^10.0.0",
