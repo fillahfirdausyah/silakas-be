@@ -60,8 +60,6 @@ docker-compose.yml
 # Credentials
 credential
 
-# Migrations (if generated locally)
-typeorm/migrations
 
 # Storage
 public
