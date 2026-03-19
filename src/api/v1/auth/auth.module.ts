@@ -11,15 +11,22 @@ import { UserEntity } from '../../../entities/user.entity';
 import { RoleEntity } from '../../../entities/role.entity';
 import { DocumentEntity } from '../../../entities/document.entity';
 import { CaseTypeEntity } from '../../../entities/case-type.entity';
+import { RefreshTokenEntity } from '../../../entities/refresh-token.entity';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([UserEntity, RoleEntity, DocumentEntity, CaseTypeEntity]),
+        TypeOrmModule.forFeature([
+            UserEntity,
+            RoleEntity,
+            DocumentEntity,
+            CaseTypeEntity,
+            RefreshTokenEntity,
+        ]),
         JwtModule.registerAsync({
             imports: [ConfigModule],
             inject: [ConfigService],
             useFactory: (configService: ConfigService) => ({
-                secret: configService.get('jwtSecret'),
+                secret: configService.get('jwt.accessSecret'),
             }),
         }),
     ],
