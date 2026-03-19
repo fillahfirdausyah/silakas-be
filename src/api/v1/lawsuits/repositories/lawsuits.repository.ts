@@ -40,7 +40,12 @@ export class LawsuitsRepository {
                     | 'ASC'
                     | 'DESC',
             },
-            relations: ['pp', 'panmudGugatan', 'panmudHukum'],
+            relations: [
+                'pp',
+                'panmudGugatan',
+                'panmudHukum',
+                'documentClassification',
+            ],
         };
 
         return this.lawsuitsRepository.findAndCount(queryOptions);
@@ -49,7 +54,12 @@ export class LawsuitsRepository {
     findById(id: string) {
         return this.lawsuitsRepository.findOne({
             where: { id },
-            relations: ['pp', 'panmudGugatan', 'panmudHukum'],
+            relations: [
+                'pp',
+                'panmudGugatan',
+                'panmudHukum',
+                'documentClassification',
+            ],
         });
     }
 
@@ -62,7 +72,12 @@ export class LawsuitsRepository {
     findByIds(ids: string[]) {
         return this.lawsuitsRepository.find({
             where: { id: In(ids) },
-            relations: ['pp', 'panmudGugatan', 'panmudHukum'],
+            relations: [
+                'pp',
+                'panmudGugatan',
+                'panmudHukum',
+                'documentClassification',
+            ],
         });
     }
 

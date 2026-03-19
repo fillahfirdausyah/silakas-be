@@ -1,6 +1,7 @@
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { UserEntity } from './user.entity';
+import { DocumentClassificationEntity } from './document-classification.entity';
 
 export enum LawsuitStatus {
     DRAFT = 'DRAFT',
@@ -32,9 +33,17 @@ export class LawsuitEntity extends BaseEntity {
         name: 'classification',
         type: 'varchar',
         length: 255,
-        nullable: false,
+        nullable: true,
     })
     classification: string;
+
+    @ManyToOne(
+        () => DocumentClassificationEntity,
+        (docClassification) => docClassification.lawsuits,
+        { nullable: true },
+    )
+    @JoinColumn({ name: 'document_classification_id' })
+    documentClassification: DocumentClassificationEntity | null;
 
     @Column({
         name: 'status',

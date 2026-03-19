@@ -5,6 +5,8 @@ import {
     NotFoundException,
     BadRequestException,
 } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { LawsuitsRepository } from '../repositories/lawsuits.repository';
 import {
     CreateLawsuitDto,
@@ -16,6 +18,7 @@ import {
     LawsuitStatus,
     LawsuitEntity,
 } from '../../../../entities/lawsuit.entity';
+import { DocumentClassificationEntity } from '../../../../entities/document-classification.entity';
 import { handleServiceError } from '../../../../shared/utils/handler-service-error.util';
 import * as ExcelJS from 'exceljs';
 
@@ -26,6 +29,8 @@ export class LawsuitsService {
     constructor(
         private readonly lawsuitsRepository: LawsuitsRepository,
         private readonly usersRepository: UsersRepository,
+        @InjectRepository(DocumentClassificationEntity)
+        private readonly documentClassificationRepository: Repository<DocumentClassificationEntity>,
     ) {}
 
     public async findAll(metadata: {
@@ -81,9 +86,20 @@ export class LawsuitsService {
             if (existing)
                 throw new ConflictException('Nomor perkara sudah ada');
 
+            const documentClassification =
+                await this.documentClassificationRepository.findOne({
+                    where: { id: dto.documentClassificationId },
+                });
+            if (!documentClassification)
+                throw new NotFoundException(
+                    'Klasifikasi dokumen tidak ditemukan',
+                );
+
             const lawsuit = await this.lawsuitsRepository.create({
-                ...dto,
+                caseNumber: dto.caseNumber,
                 decisionDate: new Date(dto.decisionDate),
+                classification: documentClassification.name,
+                documentClassification,
                 pp: user,
                 status: LawsuitStatus.DRAFT,
             });

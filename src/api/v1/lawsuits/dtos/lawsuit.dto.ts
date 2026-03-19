@@ -24,9 +24,9 @@ export class CreateLawsuitDto {
     @IsNotEmpty()
     decisionDate: string; // Incoming as string from JSON
 
-    @IsString()
-    @IsNotEmpty()
-    classification: string;
+    @IsUUID('4', { message: 'Document classification id must be UUID' })
+    @IsNotEmpty({ message: 'Document classification is required' })
+    documentClassificationId: string;
 }
 
 export class UpdateLawsuitDto {

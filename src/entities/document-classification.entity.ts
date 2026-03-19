@@ -1,5 +1,6 @@
-import { Column, Entity, Index } from 'typeorm';
+import { Column, Entity, Index, OneToMany } from 'typeorm';
 import { BaseEntity } from './base.entity';
+import { LawsuitEntity } from './lawsuit.entity';
 
 @Entity('document_classifications')
 export class DocumentClassificationEntity extends BaseEntity {
@@ -35,4 +36,7 @@ export class DocumentClassificationEntity extends BaseEntity {
         default: true,
     })
     isActive: boolean;
+
+    @OneToMany(() => LawsuitEntity, (lawsuit) => lawsuit.documentClassification)
+    lawsuits: LawsuitEntity[];
 }
