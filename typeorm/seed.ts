@@ -53,6 +53,12 @@ async function seed() {
                 slug: 'panmud-hukum',
                 description: 'Input BPS',
             },
+            {
+                id: crypto.randomUUID(),
+                name: 'Juru Sita',
+                slug: 'juru-sita',
+                description: 'Handle Juru Sita',
+            },
         ];
 
         for (const role of roles) {
