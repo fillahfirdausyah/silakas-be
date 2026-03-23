@@ -6,12 +6,14 @@ import { ConfigService, ConfigModule } from '@nestjs/config';
 import { AuthController } from './controllers/auth.controller';
 import { AuthService } from './services/auth.service';
 import { AuthRepository } from './repositories/auth.repository';
+import { ImpersonationAuditService } from '../../../shared/services/impersonation-audit.service';
 
 import { UserEntity } from '../../../entities/user.entity';
 import { RoleEntity } from '../../../entities/role.entity';
 import { DocumentEntity } from '../../../entities/document.entity';
 import { CaseTypeEntity } from '../../../entities/case-type.entity';
 import { RefreshTokenEntity } from '../../../entities/refresh-token.entity';
+import { ImpersonationAuditLogEntity } from '../../../entities/impersonation-audit-log.entity';
 
 @Module({
     imports: [
@@ -21,6 +23,7 @@ import { RefreshTokenEntity } from '../../../entities/refresh-token.entity';
             DocumentEntity,
             CaseTypeEntity,
             RefreshTokenEntity,
+            ImpersonationAuditLogEntity,
         ]),
         JwtModule.registerAsync({
             imports: [ConfigModule],
@@ -31,6 +34,6 @@ import { RefreshTokenEntity } from '../../../entities/refresh-token.entity';
         }),
     ],
     controllers: [AuthController],
-    providers: [AuthService, AuthRepository],
+    providers: [AuthService, AuthRepository, ImpersonationAuditService],
 })
 export class AuthModule {}

@@ -1,7 +1,9 @@
 import {
     ConflictException,
+    ForbiddenException,
     Injectable,
     Logger,
+    NotFoundException,
     UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -11,6 +13,7 @@ import * as crypto from 'crypto';
 import { StringValue } from 'ms';
 import { handleServiceError } from 'src/shared/utils/handler-service-error.util';
 import { AuthRepository } from '../repositories/auth.repository';
+import { ImpersonationAuditService } from '../../../../shared/services/impersonation-audit.service';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +22,7 @@ export class AuthService {
         private configService: ConfigService,
         private jwtService: JwtService,
         private authRepository: AuthRepository,
+        private auditService: ImpersonationAuditService,
     ) {}
 
     public async createUser(payload: {
@@ -254,16 +258,31 @@ export class AuthService {
             email: string;
             name: string;
             role: string;
+            originalRole?: string;
+            isImpersonating?: boolean;
         },
         rememberMe: boolean,
     ) {
         try {
-            const jwtPayload = {
+            const jwtPayload: {
+                id: string;
+                email: string;
+                name: string;
+                role: string;
+                originalRole?: string;
+                isImpersonating?: boolean;
+            } = {
                 id: user.id,
                 email: user.email,
                 name: user.name,
                 role: user.role,
             };
+
+            // Add impersonation data if present
+            if (user.isImpersonating && user.originalRole) {
+                jwtPayload.originalRole = user.originalRole;
+                jwtPayload.isImpersonating = true;
+            }
 
             const accessExp =
                 (rememberMe
@@ -298,6 +317,182 @@ export class AuthService {
             return { accessToken, refreshToken };
         } catch (error) {
             throw Error(error);
+        }
+    }
+
+    public async impersonateRole(payload: {
+        userId: string;
+        targetRoleSlug: string;
+        ipAddress?: string;
+        deviceInfo?: string;
+    }) {
+        try {
+            // Get the user with their current role
+            const user = await this.authRepository.findUserWithRole(
+                payload.userId,
+            );
+
+            if (!user) {
+                throw new UnauthorizedException('User tidak ditemukan.');
+            }
+
+            // Verify user is super-admin
+            if (user.role.slug !== 'super-admin') {
+                throw new UnauthorizedException(
+                    'Hanya super admin yang dapat melakukan impersonasi.',
+                );
+            }
+
+            // Find the target role
+            const targetRole = await this.authRepository.findRoleBySlug(
+                payload.targetRoleSlug,
+            );
+
+            if (!targetRole) {
+                throw new NotFoundException('Role tidak ditemukan.');
+            }
+
+            // Prevent impersonating super-admin (optional - can be removed if needed)
+            if (targetRole.slug === 'super-admin') {
+                throw new ForbiddenException(
+                    'Tidak dapat melakukan impersonasi ke role super-admin.',
+                );
+            }
+
+            // Generate tokens with impersonated role
+            const tokens = await this.generateTokens(
+                {
+                    id: user.id,
+                    email: user.email,
+                    name: user.fullName,
+                    role: targetRole.slug, // The impersonated role
+                    originalRole: user.role.slug, // Store original role
+                    isImpersonating: true,
+                },
+                true, // Use long expiration for impersonation sessions
+            );
+
+            // Hash and store the new refresh token
+            const refreshTokenHash = this.hashToken(tokens.refreshToken);
+            const refreshExpiration = this.configService.get<string>(
+                'jwt.refreshExpirationLong',
+            );
+            const expiresAt = this.calculateExpirationDate(refreshExpiration);
+
+            // Revoke existing tokens for this user (optional - ensures only one impersonation session)
+            await this.authRepository.revokeAllUserTokens(user.id);
+
+            await this.authRepository.saveRefreshToken({
+                userId: user.id,
+                tokenHash: refreshTokenHash,
+                expiresAt,
+                deviceInfo: payload.deviceInfo,
+                ipAddress: payload.ipAddress,
+            });
+
+            // Log the impersonation event
+            await this.auditService.logImpersonationStart({
+                userId: user.id,
+                originalRole: user.role.slug,
+                impersonatedRole: targetRole.slug,
+                ipAddress: payload.ipAddress,
+                deviceInfo: payload.deviceInfo,
+            });
+
+            return {
+                payload: {
+                    user: {
+                        id: user.id,
+                        email: user.email,
+                        fullName: user.fullName,
+                        authority: [targetRole.slug],
+                        originalAuthority: [user.role.slug],
+                        isImpersonating: true,
+                    },
+                    accessToken: tokens.accessToken,
+                    refreshToken: tokens.refreshToken,
+                    originalRole: user.role.slug,
+                    impersonatedRole: targetRole.slug,
+                },
+            };
+        } catch (error) {
+            this.logger.error(error.stack || error);
+            handleServiceError(error);
+        }
+    }
+
+    public async stopImpersonating(payload: {
+        userId: string;
+        refreshToken: string;
+        ipAddress?: string;
+        deviceInfo?: string;
+    }) {
+        try {
+            // Revoke the impersonation refresh token
+            const tokenHash = this.hashToken(payload.refreshToken);
+            await this.authRepository.revokeRefreshToken(tokenHash);
+
+            // Get the user with their original role
+            const user = await this.authRepository.findUserWithRole(
+                payload.userId,
+            );
+
+            if (!user) {
+                throw new UnauthorizedException('User tidak ditemukan.');
+            }
+
+            // Generate new tokens with original role
+            const tokens = await this.generateTokens(
+                {
+                    id: user.id,
+                    email: user.email,
+                    name: user.fullName,
+                    role: user.role.slug,
+                },
+                true,
+            );
+
+            // Store the new refresh token
+            const newTokenHash = this.hashToken(tokens.refreshToken);
+            const refreshExpiration = this.configService.get<string>(
+                'jwt.refreshExpirationLong',
+            );
+            const expiresAt = this.calculateExpirationDate(refreshExpiration);
+
+            await this.authRepository.saveRefreshToken({
+                userId: user.id,
+                tokenHash: newTokenHash,
+                expiresAt,
+                deviceInfo: payload.deviceInfo,
+                ipAddress: payload.ipAddress,
+            });
+
+            // Log the stop impersonation event
+            await this.auditService.logImpersonationStop({
+                userId: user.id,
+                originalRole: user.role.slug,
+                ipAddress: payload.ipAddress,
+                deviceInfo: payload.deviceInfo,
+            });
+
+            return {
+                payload: {
+                    user: {
+                        id: user.id,
+                        email: user.email,
+                        fullName: user.fullName,
+                        authority: [user.role.slug],
+                        isImpersonating: false,
+                    },
+                    accessToken: tokens.accessToken,
+                    refreshToken: tokens.refreshToken,
+                    originalRole: user.role.slug,
+                    impersonatedRole: user.role.slug,
+                },
+            };
+        } catch (error) {
+            this.logger.error(error.stack || error);
+            handleServiceError(error);
         }
     }
 }

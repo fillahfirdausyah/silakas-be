@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Equal, IsNull, LessThan, Repository } from 'typeorm';
 import { UserEntity } from '../../../../entities/user.entity';
 import { RefreshTokenEntity } from '../../../../entities/refresh-token.entity';
+import { RoleEntity } from '../../../../entities/role.entity';
 
 @Injectable()
 export class AuthRepository {
@@ -11,6 +12,8 @@ export class AuthRepository {
         private readonly repository: Repository<UserEntity>,
         @InjectRepository(RefreshTokenEntity)
         private readonly refreshTokenRepository: Repository<RefreshTokenEntity>,
+        @InjectRepository(RoleEntity)
+        private readonly roleRepository: Repository<RoleEntity>,
     ) {}
 
     createUser(data: { email: string; password: string; fullName: string }) {
@@ -79,6 +82,19 @@ export class AuthRepository {
     async cleanupExpiredTokens() {
         await this.refreshTokenRepository.delete({
             expiresAt: LessThan(new Date()),
+        });
+    }
+
+    async findRoleBySlug(slug: string) {
+        return this.roleRepository.findOne({
+            where: { slug: Equal(slug) },
+        });
+    }
+
+    async findUserWithRole(id: string) {
+        return this.repository.findOne({
+            where: { id },
+            relations: ['role'],
         });
     }
 }

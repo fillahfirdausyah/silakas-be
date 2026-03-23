@@ -47,6 +47,8 @@ export class AuthGuard implements CanActivate {
 
             request['userId'] = payload.id;
             request['role'] = payload.role;
+            request['originalRole'] = payload.originalRole;
+            request['isImpersonating'] = payload.isImpersonating;
         } catch (error) {
             this.logger.error(`JWT verification failed: ${error}`);
             throw new HttpException(
@@ -73,10 +75,16 @@ export class AuthGuard implements CanActivate {
             }
         }
 
+        // Use originalRole for authorization if impersonating, otherwise use current role
+        const effectiveRole =
+            request['isImpersonating'] && request['originalRole']
+                ? request['originalRole']
+                : request['role'];
+
         if (
             requiredRoles.length > 0 &&
-            !requiredRoles.includes(request['role']) &&
-            request['role'] !== 'super-admin'
+            !requiredRoles.includes(effectiveRole) &&
+            effectiveRole !== 'super-admin'
         ) {
             throw new HttpException(
                 {
