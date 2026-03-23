@@ -57,6 +57,7 @@ export class LawsuitsRepository {
             where: { id },
             relations: [
                 'pp',
+                'js',
                 'panmudGugatan',
                 'panmudHukum',
                 'documentClassification',
@@ -75,6 +76,7 @@ export class LawsuitsRepository {
             where: { id: In(ids) },
             relations: [
                 'pp',
+                'js',
                 'panmudGugatan',
                 'panmudHukum',
                 'documentClassification',
