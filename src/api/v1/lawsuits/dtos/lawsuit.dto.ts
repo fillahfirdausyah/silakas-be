@@ -35,6 +35,10 @@ export class CreateLawsuitDto {
     @IsUUID('4', { message: 'JS id must be UUID' })
     @IsOptional()
     jsId?: string;
+
+    @IsString()
+    @IsOptional()
+    description?: string;
 }
 
 export class UpdateLawsuitDto {
@@ -57,6 +61,10 @@ export class UpdateLawsuitDto {
     @IsUUID('4', { message: 'JS id must be UUID' })
     @IsOptional()
     jsId?: string;
+
+    @IsString()
+    @IsOptional()
+    description?: string;
 }
 
 export class GenerateExcelDto {

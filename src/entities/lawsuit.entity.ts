@@ -87,6 +87,14 @@ export class LawsuitEntity extends BaseEntity {
     @Column({ name: 'received_by_hukum_at', type: 'timestamp', nullable: true })
     receivedByHukumAt: Date | null;
 
+    @Column({
+        name: 'description',
+        type: 'varchar',
+        length: 255,
+        nullable: true,
+    })
+    description: string | null;
+
     // Relations
     @ManyToOne(() => UserEntity, (user) => user.ppLawsuits, { nullable: true })
     @JoinColumn({ name: 'pp_id' })

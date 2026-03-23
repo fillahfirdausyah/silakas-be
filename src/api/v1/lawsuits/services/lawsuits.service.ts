@@ -126,6 +126,7 @@ export class LawsuitsService {
                 documentClassification,
                 pp: ppUser,
                 js: jsUser,
+                description: dto.description || null,
                 status: LawsuitStatus.DRAFT,
             });
 
@@ -218,6 +219,11 @@ export class LawsuitsService {
                         'Pengguna Juru Sita tidak ditemukan',
                     );
                 lawsuit.js = jsUser;
+            }
+
+            // Update description if provided
+            if (dto.description !== undefined) {
+                lawsuit.description = dto.description || null;
             }
 
             await this.lawsuitsRepository.save(lawsuit);
