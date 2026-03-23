@@ -88,9 +88,9 @@ export class LawsuitEntity extends BaseEntity {
     receivedByHukumAt: Date | null;
 
     // Relations
-    @ManyToOne(() => UserEntity, (user) => user.ppLawsuits)
+    @ManyToOne(() => UserEntity, (user) => user.ppLawsuits, { nullable: true })
     @JoinColumn({ name: 'pp_id' })
-    pp: UserEntity;
+    pp: UserEntity | null;
 
     @ManyToOne(() => UserEntity, (user) => user.gugatanLawsuits, {
         nullable: true,
@@ -103,4 +103,8 @@ export class LawsuitEntity extends BaseEntity {
     })
     @JoinColumn({ name: 'panmud_hukum_id' })
     panmudHukum: UserEntity | null;
+
+    @ManyToOne(() => UserEntity, (user) => user.jsLawsuits, { nullable: true })
+    @JoinColumn({ name: 'js_id' })
+    js: UserEntity | null;
 }

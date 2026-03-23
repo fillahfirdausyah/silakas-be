@@ -80,4 +80,16 @@ export class UsersRepository {
     findAllRoles() {
         return this.rolesRepository.find();
     }
+
+    findByRoleSlug(slug: string) {
+        return this.usersRepository.find({
+            where: {
+                role: { slug },
+            },
+            relations: ['role'],
+            order: {
+                fullName: 'ASC',
+            },
+        });
+    }
 }

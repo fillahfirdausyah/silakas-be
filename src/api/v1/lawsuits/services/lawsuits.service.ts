@@ -77,8 +77,10 @@ export class LawsuitsService {
 
     public async create(userId: string, dto: CreateLawsuitDto) {
         try {
-            const user = await this.usersRepository.findById(userId);
-            if (!user) throw new NotFoundException('Pengguna tidak ditemukan');
+            // Get the authenticated user for fallback PP assignment
+            const authUser = await this.usersRepository.findById(userId);
+            if (!authUser)
+                throw new NotFoundException('Pengguna tidak ditemukan');
 
             const existing = await this.lawsuitsRepository.findByCaseNumber(
                 dto.caseNumber,
@@ -95,12 +97,35 @@ export class LawsuitsService {
                     'Klasifikasi dokumen tidak ditemukan',
                 );
 
+            // Resolve PP user: use provided ppId or fall back to authenticated user
+            let ppUser = authUser;
+            if (dto.ppId) {
+                const pp = await this.usersRepository.findById(dto.ppId);
+                if (!pp)
+                    throw new NotFoundException(
+                        'Pengguna Panitera Pengganti tidak ditemukan',
+                    );
+                ppUser = pp;
+            }
+
+            // Resolve JS user if provided
+            let jsUser = null;
+            if (dto.jsId) {
+                const js = await this.usersRepository.findById(dto.jsId);
+                if (!js)
+                    throw new NotFoundException(
+                        'Pengguna Juru Sita tidak ditemukan',
+                    );
+                jsUser = js;
+            }
+
             const lawsuit = await this.lawsuitsRepository.create({
                 caseNumber: dto.caseNumber,
                 decisionDate: new Date(dto.decisionDate),
                 classification: documentClassification.name,
                 documentClassification,
-                pp: user,
+                pp: ppUser,
+                js: jsUser,
                 status: LawsuitStatus.DRAFT,
             });
 
@@ -164,7 +189,7 @@ export class LawsuitsService {
         }
     }
 
-    // Gugatan Update (PBT, BHT, Ikrar)
+    // Gugatan Update (PBT, BHT, Ikrar, PP, JS)
     public async updateDetails(id: string, dto: UpdateLawsuitDto) {
         try {
             const lawsuit = await this.lawsuitsRepository.findById(id);
@@ -174,6 +199,26 @@ export class LawsuitsService {
             if (dto.pbtDate) lawsuit.pbtDate = new Date(dto.pbtDate);
             if (dto.bhtDate) lawsuit.bhtDate = new Date(dto.bhtDate);
             if (dto.ikrarDate) lawsuit.ikrarDate = new Date(dto.ikrarDate);
+
+            // Update PP if provided
+            if (dto.ppId) {
+                const ppUser = await this.usersRepository.findById(dto.ppId);
+                if (!ppUser)
+                    throw new NotFoundException(
+                        'Pengguna Panitera Pengganti tidak ditemukan',
+                    );
+                lawsuit.pp = ppUser;
+            }
+
+            // Update JS if provided
+            if (dto.jsId) {
+                const jsUser = await this.usersRepository.findById(dto.jsId);
+                if (!jsUser)
+                    throw new NotFoundException(
+                        'Pengguna Juru Sita tidak ditemukan',
+                    );
+                lawsuit.js = jsUser;
+            }
 
             await this.lawsuitsRepository.save(lawsuit);
             return { payload: lawsuit };

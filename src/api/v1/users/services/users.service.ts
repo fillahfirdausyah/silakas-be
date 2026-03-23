@@ -157,6 +157,18 @@ export class UsersService {
         }
     }
 
+    public async findByRoleSlug(slug: string) {
+        try {
+            const users = await this.usersRepository.findByRoleSlug(slug);
+            return {
+                payload: users.map((user) => this.serializeUser(user)),
+            };
+        } catch (error) {
+            this.logger.error(error.stack || error);
+            handleServiceError(error);
+        }
+    }
+
     private serializeUser(user: UserEntity) {
         return {
             id: user.id,

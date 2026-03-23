@@ -54,6 +54,16 @@ export class UsersController {
         };
     }
 
+    @Get('by-role/:slug')
+    async getUsersByRole(@Param('slug') slug: string) {
+        const result = await this.usersService.findByRoleSlug(slug);
+
+        return {
+            message: 'Pengguna berhasil diambil',
+            payload: result.payload,
+        };
+    }
+
     @Get(':id')
     async getUser(@Param('id') id: string) {
         const result = await this.usersService.findOne(id);

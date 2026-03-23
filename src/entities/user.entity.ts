@@ -51,4 +51,7 @@ export class UserEntity extends BaseEntity {
 
     @OneToMany(() => LawsuitEntity, (lawsuit) => lawsuit.panmudHukum)
     hukumLawsuits: LawsuitEntity[];
+
+    @OneToMany(() => LawsuitEntity, (lawsuit) => lawsuit.js)
+    jsLawsuits: LawsuitEntity[];
 }

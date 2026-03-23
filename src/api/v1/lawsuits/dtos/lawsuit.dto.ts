@@ -27,6 +27,14 @@ export class CreateLawsuitDto {
     @IsUUID('4', { message: 'Document classification id must be UUID' })
     @IsNotEmpty({ message: 'Document classification is required' })
     documentClassificationId: string;
+
+    @IsUUID('4', { message: 'PP id must be UUID' })
+    @IsOptional()
+    ppId?: string;
+
+    @IsUUID('4', { message: 'JS id must be UUID' })
+    @IsOptional()
+    jsId?: string;
 }
 
 export class UpdateLawsuitDto {
@@ -41,6 +49,14 @@ export class UpdateLawsuitDto {
     @IsDateString()
     @IsOptional()
     ikrarDate?: string;
+
+    @IsUUID('4', { message: 'PP id must be UUID' })
+    @IsOptional()
+    ppId?: string;
+
+    @IsUUID('4', { message: 'JS id must be UUID' })
+    @IsOptional()
+    jsId?: string;
 }
 
 export class GenerateExcelDto {

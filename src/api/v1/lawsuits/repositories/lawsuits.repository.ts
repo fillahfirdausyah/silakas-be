@@ -42,6 +42,7 @@ export class LawsuitsRepository {
             },
             relations: [
                 'pp',
+                'js',
                 'panmudGugatan',
                 'panmudHukum',
                 'documentClassification',
