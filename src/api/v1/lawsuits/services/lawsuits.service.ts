@@ -127,6 +127,7 @@ export class LawsuitsService {
                 pp: ppUser,
                 js: jsUser,
                 description: dto.description || null,
+                ikrarDate: dto.ikrarDate ? new Date(dto.ikrarDate) : null,
                 status: LawsuitStatus.DRAFT,
             });
 

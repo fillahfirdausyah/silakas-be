@@ -39,6 +39,10 @@ export class CreateLawsuitDto {
     @IsString()
     @IsOptional()
     description?: string;
+
+    @IsDateString()
+    @IsOptional()
+    ikrarDate?: string;
 }
 
 export class UpdateLawsuitDto {
