@@ -2,11 +2,13 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
     IsUUID,
     IsNotEmpty,
+    IsEnum,
     IsOptional,
     IsString,
     IsBoolean,
     MaxLength,
 } from 'class-validator';
+import { DocumentClassificationType } from '../../../../entities/document-classification.entity';
 
 export class UpdateDocumentClassificationDto {
     @ApiProperty({ format: 'uuid' })
@@ -25,6 +27,16 @@ export class UpdateDocumentClassificationDto {
     @IsString({ message: 'Kode harus berupa string' })
     @MaxLength(50, { message: 'Kode maksimal 50 karakter' })
     code?: string;
+
+    @ApiPropertyOptional({
+        enum: DocumentClassificationType,
+        example: DocumentClassificationType.GUGATAN,
+    })
+    @IsOptional()
+    @IsEnum(DocumentClassificationType, {
+        message: 'Tipe harus salah satu dari: gugatan, permohonan',
+    })
+    type?: DocumentClassificationType;
 
     @ApiPropertyOptional({ example: 'Klasifikasi dokumen perdata' })
     @IsOptional()

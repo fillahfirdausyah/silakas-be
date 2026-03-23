@@ -2,6 +2,11 @@ import { Column, Entity, Index, OneToMany } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { LawsuitEntity } from './lawsuit.entity';
 
+export enum DocumentClassificationType {
+    GUGATAN = 'gugatan',
+    PERMOHONAN = 'permohonan',
+}
+
 @Entity('document_classifications')
 export class DocumentClassificationEntity extends BaseEntity {
     @Index({ unique: true })
@@ -21,6 +26,14 @@ export class DocumentClassificationEntity extends BaseEntity {
         nullable: false,
     })
     code: string;
+
+    @Column({
+        name: 'type',
+        type: 'enum',
+        enum: DocumentClassificationType,
+        default: DocumentClassificationType.GUGATAN,
+    })
+    type: DocumentClassificationType;
 
     @Column({
         name: 'description',

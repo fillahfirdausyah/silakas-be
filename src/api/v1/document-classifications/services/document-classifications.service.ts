@@ -86,6 +86,7 @@ export class DocumentClassificationsService {
             const created = await this.repository.create({
                 name: payload.name,
                 code: payload.code,
+                type: payload.type,
                 description: payload.description,
             });
 
@@ -131,6 +132,10 @@ export class DocumentClassificationsService {
                 item.description = payload.description;
             }
 
+            if (payload.type !== undefined) {
+                item.type = payload.type;
+            }
+
             if (payload.isActive !== undefined) {
                 item.isActive = payload.isActive;
             }
@@ -171,6 +176,7 @@ export class DocumentClassificationsService {
             id: item.id,
             name: item.name,
             code: item.code,
+            type: item.type,
             description: item.description,
             isActive: item.isActive,
             createdAt: item.createdAt,
