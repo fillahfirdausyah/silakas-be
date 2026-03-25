@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere, ILike, In } from 'typeorm';
-import { LawsuitEntity } from '../../../../entities/lawsuit.entity';
+import {
+    LawsuitEntity,
+    LawsuitType,
+} from '../../../../entities/lawsuit.entity';
 
 @Injectable()
 export class LawsuitsRepository {
@@ -16,6 +19,7 @@ export class LawsuitsRepository {
         search: string;
         sortBy: string;
         sortType: string;
+        type?: LawsuitType;
     }) {
         const offset =
             metadata.page > 1 ? metadata.limit * (metadata.page - 1) : 0;
@@ -29,6 +33,15 @@ export class LawsuitsRepository {
                 { caseNumber: ILike(`%${metadata.search}%`) },
                 { classification: ILike(`%${metadata.search}%`) },
             ];
+        }
+
+        // Apply type filter if provided
+        if (metadata.type) {
+            if (Array.isArray(where)) {
+                where = where.map((w) => ({ ...w, type: metadata.type }));
+            } else {
+                where = { ...where, type: metadata.type };
+            }
         }
 
         const queryOptions = {

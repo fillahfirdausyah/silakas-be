@@ -11,12 +11,14 @@ import { LawsuitsRepository } from '../repositories/lawsuits.repository';
 import {
     CreateLawsuitDto,
     GenerateExcelDto,
+    GetLawsuitsDto,
     UpdateLawsuitDto,
 } from '../dtos/lawsuit.dto';
 import { UsersRepository } from '../../users/repositories/users.repository';
 import {
     LawsuitStatus,
     LawsuitEntity,
+    LawsuitType,
 } from '../../../../entities/lawsuit.entity';
 import { DocumentClassificationEntity } from '../../../../entities/document-classification.entity';
 import { handleServiceError } from '../../../../shared/utils/handler-service-error.util';
@@ -33,13 +35,7 @@ export class LawsuitsService {
         private readonly documentClassificationRepository: Repository<DocumentClassificationEntity>,
     ) {}
 
-    public async findAll(metadata: {
-        page: number;
-        limit: number;
-        search: string;
-        sortBy: string;
-        sortType: string;
-    }) {
+    public async findAll(metadata: GetLawsuitsDto) {
         try {
             const [lawsuits, count] =
                 await this.lawsuitsRepository.findByPagination(metadata);
@@ -128,6 +124,9 @@ export class LawsuitsService {
                 js: jsUser,
                 description: dto.description || null,
                 ikrarDate: dto.ikrarDate ? new Date(dto.ikrarDate) : null,
+                type:
+                    dto.type ||
+                    (documentClassification.type as unknown as LawsuitType),
                 status: LawsuitStatus.DRAFT,
             });
 

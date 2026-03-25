@@ -26,9 +26,7 @@ import { GetDocumentClassificationsDto } from '../dtos/get-document-classificati
     version: '1',
 })
 export class DocumentClassificationsController {
-    constructor(
-        private readonly service: DocumentClassificationsService,
-    ) {}
+    constructor(private readonly service: DocumentClassificationsService) {}
 
     @Get()
     async getAll(@Query() query: GetDocumentClassificationsDto) {
@@ -38,6 +36,7 @@ export class DocumentClassificationsController {
             search: query.search,
             sortBy: query.sortBy,
             sortType: query.sortType,
+            type: query.type,
         });
 
         return {

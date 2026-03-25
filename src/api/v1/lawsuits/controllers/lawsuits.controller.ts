@@ -61,13 +61,7 @@ export class LawsuitsController {
         'panmud-hukum',
     )
     async findAll(@Query() query: GetLawsuitsDto) {
-        const result = await this.lawsuitsService.findAll({
-            page: query.page,
-            limit: query.limit,
-            search: query.search,
-            sortBy: query.sortBy,
-            sortType: query.sortType,
-        });
+        const result = await this.lawsuitsService.findAll(query);
         return {
             message: 'Berkas gugatan berhasil diambil',
             payload: result.payload,

@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere, ILike } from 'typeorm';
 
-import { DocumentClassificationEntity } from '../../../../entities/document-classification.entity';
+import {
+    DocumentClassificationEntity,
+    DocumentClassificationType,
+} from '../../../../entities/document-classification.entity';
 
 @Injectable()
 export class DocumentClassificationsRepository {
@@ -17,10 +20,17 @@ export class DocumentClassificationsRepository {
         search: string;
         sortBy: string;
         sortType: string;
+        type?: DocumentClassificationType;
     }) {
         const offset =
             metadata.page > 1 ? metadata.limit * (metadata.page - 1) : 0;
         const baseWhere: FindOptionsWhere<DocumentClassificationEntity> = {};
+
+        // Apply type filter if provided
+        if (metadata.type) {
+            baseWhere.type = metadata.type;
+        }
+
         let where: FindOptionsWhere<DocumentClassificationEntity>[] = [];
 
         if (metadata.search) {

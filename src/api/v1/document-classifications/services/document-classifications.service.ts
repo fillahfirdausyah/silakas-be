@@ -5,7 +5,10 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 
-import { DocumentClassificationEntity } from '../../../../entities/document-classification.entity';
+import {
+    DocumentClassificationEntity,
+    DocumentClassificationType,
+} from '../../../../entities/document-classification.entity';
 import { handleServiceError } from '../../../../shared/utils/handler-service-error.util';
 import { DocumentClassificationsRepository } from '../repositories/document-classifications.repository';
 import { CreateDocumentClassificationDto } from '../dtos/create-document-classification.dto';
@@ -25,6 +28,7 @@ export class DocumentClassificationsService {
         search: string;
         sortBy: string;
         sortType: string;
+        type?: DocumentClassificationType;
     }) {
         try {
             const [items, count] =
@@ -40,6 +44,7 @@ export class DocumentClassificationsService {
                     search: metadata.search,
                     sortBy: metadata.sortBy,
                     sortType: metadata.sortType,
+                    type: metadata.type,
                     maxPages,
                     total: count,
                 },

@@ -11,6 +11,11 @@ export enum LawsuitStatus {
     RECEIVED_BY_HUKUM = 'RECEIVED_BY_HUKUM',
 }
 
+export enum LawsuitType {
+    GUGATAN = 'gugatan',
+    PERMOHONAN = 'permohonan',
+}
+
 @Entity('lawsuits')
 export class LawsuitEntity extends BaseEntity {
     @Column({
@@ -44,6 +49,14 @@ export class LawsuitEntity extends BaseEntity {
     )
     @JoinColumn({ name: 'document_classification_id' })
     documentClassification: DocumentClassificationEntity | null;
+
+    @Column({
+        name: 'type',
+        type: 'enum',
+        enum: LawsuitType,
+        default: LawsuitType.GUGATAN,
+    })
+    type: LawsuitType;
 
     @Column({
         name: 'status',

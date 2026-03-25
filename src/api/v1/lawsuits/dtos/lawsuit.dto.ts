@@ -2,6 +2,7 @@ import {
     ArrayMinSize,
     IsArray,
     IsDateString,
+    IsEnum,
     IsInt,
     IsNotEmpty,
     IsOptional,
@@ -11,6 +12,11 @@ import {
     Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+
+export enum LawsuitType {
+    GUGATAN = 'gugatan',
+    PERMOHONAN = 'permohonan',
+}
 
 export class CreateLawsuitDto {
     @IsString()
@@ -43,6 +49,12 @@ export class CreateLawsuitDto {
     @IsDateString()
     @IsOptional()
     ikrarDate?: string;
+
+    @IsEnum(LawsuitType, {
+        message: 'Type must be either gugatan or permohonan',
+    })
+    @IsOptional()
+    type?: LawsuitType;
 }
 
 export class UpdateLawsuitDto {
@@ -102,4 +114,10 @@ export class GetLawsuitsDto {
     @IsOptional()
     @IsString()
     sortType: string = 'DESC';
+
+    @IsEnum(LawsuitType, {
+        message: 'Type must be either gugatan or permohonan',
+    })
+    @IsOptional()
+    type?: LawsuitType;
 }

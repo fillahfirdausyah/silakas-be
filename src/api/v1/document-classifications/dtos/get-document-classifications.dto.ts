@@ -8,6 +8,7 @@ import {
     Min,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { DocumentClassificationType } from '../../../../entities/document-classification.entity';
 
 export class GetDocumentClassificationsDto {
     @IsOptional()
@@ -39,4 +40,10 @@ export class GetDocumentClassificationsDto {
     })
     @Transform(({ value }) => value?.toUpperCase())
     sortType: string = 'ASC';
+
+    @IsEnum(DocumentClassificationType, {
+        message: 'Type must be either gugatan or permohonan',
+    })
+    @IsOptional()
+    type?: DocumentClassificationType;
 }
