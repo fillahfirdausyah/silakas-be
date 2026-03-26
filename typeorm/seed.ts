@@ -55,6 +55,12 @@ async function seed() {
             },
             {
                 id: crypto.randomUUID(),
+                name: 'Panmud Permohonan',
+                slug: 'panmud-permohonan',
+                description: 'Input Permohonan',
+            },
+            {
+                id: crypto.randomUUID(),
                 name: 'Juru Sita',
                 slug: 'juru-sita',
                 description: 'Handle Juru Sita',
