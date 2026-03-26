@@ -14,6 +14,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../../../../shared/decorators/roles.decorator';
 import { AuthGuard } from '../../auth/guards/auth.guard';
 import {
+    BulkCreateUpayaHukumDto,
     CreateUpayaHukumDto,
     GenerateBeritaAcaraDto,
     GetUpayaHukumDto,
@@ -49,6 +50,17 @@ export class UpayaHukumController {
         return {
             message: 'Berkas berhasil dimasukkan ke Upaya Hukum',
             payload: result.payload,
+        };
+    }
+
+    @Post('bulk')
+    @Roles('panmud-gugatan', 'panmud-permohonan')
+    async bulkCreate(@Body() body: BulkCreateUpayaHukumDto) {
+        const result = await this.upayaHukumService.bulkCreate(body);
+        return {
+            message: 'Bulk masukan ke Upaya Hukum berhasil',
+            payload: result.payload,
+            errors: result.errors,
         };
     }
 

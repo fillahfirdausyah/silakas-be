@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
     ArrayMinSize,
     IsArray,
@@ -6,6 +7,7 @@ import {
     IsNotEmpty,
     IsOptional,
     IsUUID,
+    ValidateNested,
 } from 'class-validator';
 import { UpayaHukumType } from '../../../../entities/upaya-hukum.entity';
 
@@ -37,6 +39,24 @@ export class GetUpayaHukumDto {
     })
     @IsOptional()
     type?: UpayaHukumType;
+}
+
+export class BulkUpayaHukumItemDto {
+    @IsUUID('4', { message: 'Lawsuit id must be UUID' })
+    @IsNotEmpty({ message: 'Lawsuit id is required' })
+    lawsuitId: string;
+
+    @IsDateString({}, { message: 'Tanggal daftar must be a valid date' })
+    @IsNotEmpty({ message: 'Tanggal daftar is required' })
+    tanggalDaftar: string;
+}
+
+export class BulkCreateUpayaHukumDto {
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => BulkUpayaHukumItemDto)
+    @ArrayMinSize(1)
+    items: BulkUpayaHukumItemDto[];
 }
 
 export class GenerateBeritaAcaraDto {

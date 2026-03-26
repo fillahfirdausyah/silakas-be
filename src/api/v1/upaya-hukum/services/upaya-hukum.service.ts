@@ -11,6 +11,7 @@ import { UpayaHukumType } from '../../../../entities/upaya-hukum.entity';
 import { handleServiceError } from '../../../../shared/utils/handler-service-error.util';
 import { LawsuitsRepository } from '../../lawsuits/repositories/lawsuits.repository';
 import {
+    BulkCreateUpayaHukumDto,
     CreateUpayaHukumDto,
     GenerateBeritaAcaraDto,
     GetUpayaHukumDto,
@@ -105,6 +106,78 @@ export class UpayaHukumService {
             this.logger.error(error.stack || error);
             handleServiceError(error);
         }
+    }
+
+    async bulkCreate(dto: BulkCreateUpayaHukumDto) {
+        const results = [];
+        const errors: string[] = [];
+
+        for (const item of dto.items) {
+            try {
+                const lawsuit = await this.lawsuitsRepository.findById(
+                    item.lawsuitId,
+                );
+                if (!lawsuit) {
+                    errors.push(`${item.lawsuitId}: Berkas tidak ditemukan`);
+                    continue;
+                }
+
+                if (
+                    lawsuit.type !== 'gugatan' &&
+                    lawsuit.type !== 'permohonan'
+                ) {
+                    errors.push(
+                        `${lawsuit.caseNumber}: Tipe berkas tidak valid`,
+                    );
+                    continue;
+                }
+
+                if (
+                    lawsuit.status !== LawsuitStatus.RECEIVED_BY_GUGATAN &&
+                    lawsuit.status !== LawsuitStatus.RECEIVED_BY_PERMOHONAN
+                ) {
+                    errors.push(
+                        `${lawsuit.caseNumber}: Berkas belum diterima oleh Panmud`,
+                    );
+                    continue;
+                }
+
+                const existing =
+                    await this.upayaHukumRepository.findByLawsuitId(
+                        item.lawsuitId,
+                    );
+                if (existing) {
+                    errors.push(
+                        `${lawsuit.caseNumber}: Sudah ada di Upaya Hukum`,
+                    );
+                    continue;
+                }
+
+                const upayaHukum = await this.upayaHukumRepository.create({
+                    lawsuitId: item.lawsuitId,
+                    type: UpayaHukumType.BANDING,
+                    tanggalDaftar: new Date(item.tanggalDaftar),
+                    tanggalDaftarBanding: new Date(item.tanggalDaftar),
+                    tanggalDaftarKasasi: null,
+                });
+
+                results.push(upayaHukum);
+            } catch (error) {
+                this.logger.error(
+                    `Bulk create upaya hukum error for ${item.lawsuitId}: ${error.message}`,
+                );
+                errors.push(`${item.lawsuitId}: ${error.message}`);
+            }
+        }
+
+        if (results.length === 0 && errors.length > 0) {
+            throw new BadRequestException(errors.join('; '));
+        }
+
+        return {
+            payload: results,
+            errors: errors.length > 0 ? errors : undefined,
+        };
     }
 
     async promoteToKasasi(id: string, dto: PromoteToKasasiDto) {
