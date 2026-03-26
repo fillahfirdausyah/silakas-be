@@ -1,28 +1,28 @@
 import {
+    BadRequestException,
     ConflictException,
     Injectable,
     Logger,
     NotFoundException,
-    BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as ExcelJS from 'exceljs';
 import { Repository } from 'typeorm';
-import { LawsuitsRepository } from '../repositories/lawsuits.repository';
+import { DocumentClassificationEntity } from '../../../../entities/document-classification.entity';
+import {
+    LawsuitEntity,
+    LawsuitStatus,
+    LawsuitType,
+} from '../../../../entities/lawsuit.entity';
+import { handleServiceError } from '../../../../shared/utils/handler-service-error.util';
+import { UsersRepository } from '../../users/repositories/users.repository';
 import {
     CreateLawsuitDto,
     GenerateExcelDto,
     GetLawsuitsDto,
     UpdateLawsuitDto,
 } from '../dtos/lawsuit.dto';
-import { UsersRepository } from '../../users/repositories/users.repository';
-import {
-    LawsuitStatus,
-    LawsuitEntity,
-    LawsuitType,
-} from '../../../../entities/lawsuit.entity';
-import { DocumentClassificationEntity } from '../../../../entities/document-classification.entity';
-import { handleServiceError } from '../../../../shared/utils/handler-service-error.util';
-import * as ExcelJS from 'exceljs';
+import { LawsuitsRepository } from '../repositories/lawsuits.repository';
 
 @Injectable()
 export class LawsuitsService {
@@ -348,6 +348,10 @@ export class LawsuitsService {
                 );
             }
 
+            // Determine type label
+            const typeLabel =
+                dto.type === LawsuitType.PERMOHONAN ? 'PERMOHONAN' : 'GUGATAN';
+
             const workbook = new ExcelJS.Workbook();
             const worksheet = workbook.addWorksheet('Berita Acara');
 
@@ -373,7 +377,7 @@ export class LawsuitsService {
             // Row 1: Title
             worksheet.mergeCells('A1:H1');
             const titleCell = worksheet.getCell('A1');
-            titleCell.value = 'BERITA ACARA PENYERAHAN BERKAS PERKARA GUGATAN';
+            titleCell.value = `BERITA ACARA PENYERAHAN BERKAS PERKARA ${typeLabel}`;
             titleCell.font = { bold: true, size: 14 };
             titleCell.alignment = { horizontal: 'center' };
 
@@ -417,8 +421,7 @@ export class LawsuitsService {
             // Row 13: Handover paragraph
             worksheet.mergeCells('A13:H14');
             const handoverCell = worksheet.getCell('A13');
-            handoverCell.value =
-                'Pihak Pertama menyerahkan berkas perkara kepada pihak Kedua dan Pihak Kedua menyatakan telah menerima dari Pihak Pertama berupa berkas gugatan yang telah berkekuatan hukum tetap, yaitu:';
+            handoverCell.value = `Pihak Pertama menyerahkan berkas perkara kepada pihak Kedua dan Pihak Kedua menyatakan telah menerima dari Pihak Pertama berupa berkas ${typeLabel.toLowerCase()} yang telah berkekuatan hukum tetap, yaitu:`;
             handoverCell.alignment = { wrapText: true, vertical: 'top' };
 
             // Row 16: Table header

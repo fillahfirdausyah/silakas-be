@@ -1,4 +1,6 @@
 import {
+    ArrayMinSize,
+    IsArray,
     IsDateString,
     IsEnum,
     IsNotEmpty,
@@ -35,4 +37,11 @@ export class GetUpayaHukumDto {
     })
     @IsOptional()
     type?: UpayaHukumType;
+}
+
+export class GenerateBeritaAcaraDto {
+    @IsArray()
+    @IsUUID('4', { each: true })
+    @ArrayMinSize(1)
+    upayaHukumIds: string[];
 }

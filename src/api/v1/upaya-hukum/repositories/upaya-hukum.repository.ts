@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import {
     UpayaHukumEntity,
     UpayaHukumType,
@@ -29,6 +29,18 @@ export class UpayaHukumRepository {
     findById(id: string) {
         return this.upayaHukumRepository.findOne({
             where: { id },
+            relations: [
+                'lawsuit',
+                'lawsuit.pp',
+                'lawsuit.js',
+                'lawsuit.documentClassification',
+            ],
+        });
+    }
+
+    findByIds(ids: string[]) {
+        return this.upayaHukumRepository.find({
+            where: { id: In(ids) },
             relations: [
                 'lawsuit',
                 'lawsuit.pp',

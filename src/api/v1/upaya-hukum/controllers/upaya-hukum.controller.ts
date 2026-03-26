@@ -6,6 +6,7 @@ import {
     Patch,
     Post,
     Query,
+    StreamableFile,
     UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -14,6 +15,7 @@ import { Roles } from '../../../../shared/decorators/roles.decorator';
 import { AuthGuard } from '../../auth/guards/auth.guard';
 import {
     CreateUpayaHukumDto,
+    GenerateBeritaAcaraDto,
     GetUpayaHukumDto,
     PromoteToKasasiDto,
     UpdateUpayaHukumDto,
@@ -48,6 +50,16 @@ export class UpayaHukumController {
             message: 'Berkas berhasil dimasukkan ke Upaya Hukum',
             payload: result.payload,
         };
+    }
+
+    @Post('generate')
+    @Roles('panmud-gugatan')
+    async generate(@Body() body: GenerateBeritaAcaraDto) {
+        const result = await this.upayaHukumService.generateBeritaAcara(body);
+        return new StreamableFile(result.payload as any, {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            disposition: 'attachment; filename="berita-acara-upaya-hukum.xlsx"',
+        });
     }
 
     @Patch(':id')

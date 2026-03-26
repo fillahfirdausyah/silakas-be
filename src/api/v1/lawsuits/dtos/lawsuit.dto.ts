@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
     ArrayMinSize,
     IsArray,
@@ -11,7 +12,6 @@ import {
     Matches,
     Min,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 
 export enum LawsuitType {
     GUGATAN = 'gugatan',
@@ -88,6 +88,12 @@ export class GenerateExcelDto {
     @IsUUID('4', { each: true })
     @ArrayMinSize(1)
     lawsuitIds: string[];
+
+    @IsEnum(LawsuitType, {
+        message: 'Type must be either gugatan or permohonan',
+    })
+    @IsOptional()
+    type?: LawsuitType;
 }
 
 export class GetLawsuitsDto {
