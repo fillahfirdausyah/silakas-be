@@ -171,4 +171,8 @@ export class GetLawsuitsDto {
     @IsDateString()
     @IsOptional()
     endDate?: string;
+
+    @IsUUID('4', { message: 'PP id must be UUID' })
+    @IsOptional()
+    ppId?: string;
 }

@@ -32,6 +32,7 @@ export class LawsuitsRepository {
         status?: LawsuitStatus;
         startDate?: string;
         endDate?: string;
+        ppId?: string;
     }) {
         const offset =
             metadata.page > 1 ? metadata.limit * (metadata.page - 1) : 0;
@@ -62,6 +63,18 @@ export class LawsuitsRepository {
                 where = where.map((w) => ({ ...w, status: metadata.status }));
             } else {
                 where = { ...where, status: metadata.status };
+            }
+        }
+
+        // Apply ppId filter
+        if (metadata.ppId) {
+            if (Array.isArray(where)) {
+                where = where.map((w) => ({
+                    ...w,
+                    pp: { id: metadata.ppId },
+                }));
+            } else {
+                where = { ...where, pp: { id: metadata.ppId } };
             }
         }
 
