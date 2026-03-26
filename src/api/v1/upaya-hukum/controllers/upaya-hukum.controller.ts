@@ -15,6 +15,7 @@ import { Roles } from '../../../../shared/decorators/roles.decorator';
 import { AuthGuard } from '../../auth/guards/auth.guard';
 import {
     BulkCreateUpayaHukumDto,
+    BulkPromoteToKasasiDto,
     CreateUpayaHukumDto,
     GenerateBeritaAcaraDto,
     GetUpayaHukumDto,
@@ -59,6 +60,17 @@ export class UpayaHukumController {
         const result = await this.upayaHukumService.bulkCreate(body);
         return {
             message: 'Bulk masukan ke Upaya Hukum berhasil',
+            payload: result.payload,
+            errors: result.errors,
+        };
+    }
+
+    @Post('bulk-promote-to-kasasi')
+    @Roles('panmud-gugatan', 'panmud-permohonan')
+    async bulkPromoteToKasasi(@Body() body: BulkPromoteToKasasiDto) {
+        const result = await this.upayaHukumService.bulkPromoteToKasasi(body);
+        return {
+            message: 'Bulk promosi ke Kasasi berhasil',
             payload: result.payload,
             errors: result.errors,
         };

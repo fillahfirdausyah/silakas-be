@@ -12,6 +12,7 @@ import { handleServiceError } from '../../../../shared/utils/handler-service-err
 import { LawsuitsRepository } from '../../lawsuits/repositories/lawsuits.repository';
 import {
     BulkCreateUpayaHukumDto,
+    BulkPromoteToKasasiDto,
     CreateUpayaHukumDto,
     GenerateBeritaAcaraDto,
     GetUpayaHukumDto,
@@ -204,6 +205,55 @@ export class UpayaHukumService {
             this.logger.error(error.stack || error);
             handleServiceError(error);
         }
+    }
+
+    async bulkPromoteToKasasi(dto: BulkPromoteToKasasiDto) {
+        const results = [];
+        const errors: string[] = [];
+
+        for (const item of dto.items) {
+            try {
+                const upayaHukum = await this.upayaHukumRepository.findById(
+                    item.upayaHukumId,
+                );
+                if (!upayaHukum) {
+                    errors.push(
+                        `${item.upayaHukumId}: Data Upaya Hukum tidak ditemukan`,
+                    );
+                    continue;
+                }
+
+                if (upayaHukum.type !== UpayaHukumType.BANDING) {
+                    errors.push(
+                        `${upayaHukum.lawsuit?.caseNumber || item.upayaHukumId}: Hanya tipe BANDING yang dapat dipromosikan`,
+                    );
+                    continue;
+                }
+
+                upayaHukum.type = UpayaHukumType.KASASI;
+                upayaHukum.tanggalDaftarKasasi = new Date(
+                    item.tanggalDaftarKasasi,
+                );
+                upayaHukum.tanggalDaftar = new Date(item.tanggalDaftarKasasi);
+
+                await this.upayaHukumRepository.save(upayaHukum);
+                results.push(upayaHukum);
+            } catch (error) {
+                this.logger.error(
+                    `Bulk promote to kasasi error for ${item.upayaHukumId}: ${error.message}`,
+                );
+                errors.push(`${item.upayaHukumId}: ${error.message}`);
+            }
+        }
+
+        if (results.length === 0 && errors.length > 0) {
+            throw new BadRequestException(errors.join('; '));
+        }
+
+        return {
+            payload: results,
+            errors: errors.length > 0 ? errors : undefined,
+        };
     }
 
     async update(id: string, dto: UpdateUpayaHukumDto) {

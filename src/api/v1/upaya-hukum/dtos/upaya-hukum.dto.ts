@@ -59,6 +59,24 @@ export class BulkCreateUpayaHukumDto {
     items: BulkUpayaHukumItemDto[];
 }
 
+export class BulkPromoteToKasasiItemDto {
+    @IsUUID('4', { message: 'Upaya hukum id must be UUID' })
+    @IsNotEmpty({ message: 'Upaya hukum id is required' })
+    upayaHukumId: string;
+
+    @IsDateString({}, { message: 'Tanggal daftar kasasi must be a valid date' })
+    @IsNotEmpty({ message: 'Tanggal daftar kasasi is required' })
+    tanggalDaftarKasasi: string;
+}
+
+export class BulkPromoteToKasasiDto {
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => BulkPromoteToKasasiItemDto)
+    @ArrayMinSize(1)
+    items: BulkPromoteToKasasiItemDto[];
+}
+
 export class GenerateBeritaAcaraDto {
     @IsArray()
     @IsUUID('4', { each: true })
