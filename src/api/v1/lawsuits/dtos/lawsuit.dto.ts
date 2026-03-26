@@ -12,6 +12,7 @@ import {
     Matches,
     Min,
 } from 'class-validator';
+import { LawsuitStatus } from '../../../../entities/lawsuit.entity';
 
 export enum LawsuitType {
     GUGATAN = 'gugatan',
@@ -149,4 +150,18 @@ export class GetLawsuitsDto {
     })
     @IsOptional()
     type?: LawsuitType;
+
+    @IsEnum(LawsuitStatus, {
+        message: 'Status must be a valid lawsuit status',
+    })
+    @IsOptional()
+    status?: LawsuitStatus;
+
+    @IsDateString()
+    @IsOptional()
+    startDate?: string;
+
+    @IsDateString()
+    @IsOptional()
+    endDate?: string;
 }

@@ -1,8 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, ILike, In, Repository } from 'typeorm';
+import {
+    Between,
+    FindOptionsWhere,
+    ILike,
+    In,
+    LessThanOrEqual,
+    MoreThanOrEqual,
+    Repository,
+} from 'typeorm';
 import {
     LawsuitEntity,
+    LawsuitStatus,
     LawsuitType,
 } from '../../../../entities/lawsuit.entity';
 
@@ -20,6 +29,9 @@ export class LawsuitsRepository {
         sortBy: string;
         sortType: string;
         type?: LawsuitType;
+        status?: LawsuitStatus;
+        startDate?: string;
+        endDate?: string;
     }) {
         const offset =
             metadata.page > 1 ? metadata.limit * (metadata.page - 1) : 0;
@@ -35,12 +47,37 @@ export class LawsuitsRepository {
             ];
         }
 
-        // Apply type filter if provided
+        // Apply type filter
         if (metadata.type) {
             if (Array.isArray(where)) {
                 where = where.map((w) => ({ ...w, type: metadata.type }));
             } else {
                 where = { ...where, type: metadata.type };
+            }
+        }
+
+        // Apply status filter
+        if (metadata.status) {
+            if (Array.isArray(where)) {
+                where = where.map((w) => ({ ...w, status: metadata.status }));
+            } else {
+                where = { ...where, status: metadata.status };
+            }
+        }
+
+        // Apply decision date range filter
+        const dateFilter = this.buildDateFilter(
+            metadata.startDate,
+            metadata.endDate,
+        );
+        if (dateFilter) {
+            if (Array.isArray(where)) {
+                where = where.map((w) => ({
+                    ...w,
+                    decisionDate: dateFilter,
+                }));
+            } else {
+                where = { ...where, decisionDate: dateFilter };
             }
         }
 
@@ -65,6 +102,19 @@ export class LawsuitsRepository {
         };
 
         return this.lawsuitsRepository.findAndCount(queryOptions);
+    }
+
+    private buildDateFilter(startDate?: string, endDate?: string) {
+        if (startDate && endDate) {
+            return Between(new Date(startDate), new Date(endDate));
+        }
+        if (startDate) {
+            return MoreThanOrEqual(new Date(startDate));
+        }
+        if (endDate) {
+            return LessThanOrEqual(new Date(endDate));
+        }
+        return null;
     }
 
     findById(id: string) {
