@@ -6,8 +6,13 @@ import { UserEntity } from './user.entity';
 
 export enum LawsuitStatus {
     DRAFT = 'DRAFT',
+    // Gugatan statuses
     SUBMITTED_TO_GUGATAN = 'SUBMITTED_TO_GUGATAN',
     RECEIVED_BY_GUGATAN = 'RECEIVED_BY_GUGATAN',
+    // Permohonan statuses
+    SUBMITTED_TO_PERMOHONAN = 'SUBMITTED_TO_PERMOHONAN',
+    RECEIVED_BY_PERMOHONAN = 'RECEIVED_BY_PERMOHONAN',
+    // Common final statuses
     SUBMITTED_TO_HUKUM = 'SUBMITTED_TO_HUKUM',
     RECEIVED_BY_HUKUM = 'RECEIVED_BY_HUKUM',
 }
@@ -82,6 +87,21 @@ export class LawsuitEntity extends BaseEntity {
     })
     receivedByGugatanAt: Date | null;
 
+    // Permohonan workflow dates
+    @Column({
+        name: 'submitted_to_permohonan_at',
+        type: 'timestamp',
+        nullable: true,
+    })
+    submittedToPermohonanAt: Date | null;
+
+    @Column({
+        name: 'received_by_permohonan_at',
+        type: 'timestamp',
+        nullable: true,
+    })
+    receivedByPermohonanAt: Date | null;
+
     @Column({ name: 'pbt_date', type: 'date', nullable: true })
     pbtDate: Date | null;
 
@@ -119,6 +139,12 @@ export class LawsuitEntity extends BaseEntity {
     })
     @JoinColumn({ name: 'panmud_gugatan_id' })
     panmudGugatan: UserEntity | null;
+
+    @ManyToOne(() => UserEntity, (user) => user.permohonanLawsuits, {
+        nullable: true,
+    })
+    @JoinColumn({ name: 'panmud_permohonan_id' })
+    panmudPermohonan: UserEntity | null;
 
     @ManyToOne(() => UserEntity, (user) => user.hukumLawsuits, {
         nullable: true,

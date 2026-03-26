@@ -66,6 +66,21 @@ export class CreateLawsuitDto {
 }
 
 export class UpdateLawsuitDto {
+    @IsString()
+    @IsOptional()
+    @Matches(/^\d+\/Pdt\.G\/\d{4}\/PA\.Bjm$/, {
+        message: 'Case number must follow the format xxx/Pdt.G/yyyy/PA.Bjm',
+    })
+    caseNumber?: string;
+
+    @IsDateString()
+    @IsOptional()
+    decisionDate?: string;
+
+    @IsUUID('4', { message: 'Document classification id must be UUID' })
+    @IsOptional()
+    documentClassificationId?: string;
+
     @IsDateString()
     @IsOptional()
     pbtDate?: string;

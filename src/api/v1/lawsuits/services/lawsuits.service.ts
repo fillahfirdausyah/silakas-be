@@ -199,6 +199,35 @@ export class LawsuitsService {
             if (!lawsuit)
                 throw new NotFoundException('Berkas gugatan tidak ditemukan');
 
+            // Update caseNumber if provided
+            if (dto.caseNumber) {
+                const existing = await this.lawsuitsRepository.findByCaseNumber(
+                    dto.caseNumber,
+                );
+                if (existing && existing.id !== id)
+                    throw new ConflictException('Nomor perkara sudah ada');
+                lawsuit.caseNumber = dto.caseNumber;
+            }
+
+            // Update decisionDate if provided
+            if (dto.decisionDate) {
+                lawsuit.decisionDate = new Date(dto.decisionDate);
+            }
+
+            // Update documentClassification if provided
+            if (dto.documentClassificationId) {
+                const documentClassification =
+                    await this.documentClassificationRepository.findOne({
+                        where: { id: dto.documentClassificationId },
+                    });
+                if (!documentClassification)
+                    throw new NotFoundException(
+                        'Klasifikasi dokumen tidak ditemukan',
+                    );
+                lawsuit.documentClassification = documentClassification;
+                lawsuit.classification = documentClassification.name;
+            }
+
             if (dto.pbtDate) lawsuit.pbtDate = new Date(dto.pbtDate);
             if (dto.bhtDate) lawsuit.bhtDate = new Date(dto.bhtDate);
             if (dto.ikrarDate) lawsuit.ikrarDate = new Date(dto.ikrarDate);
@@ -279,6 +308,108 @@ export class LawsuitsService {
             lawsuit.status = LawsuitStatus.RECEIVED_BY_HUKUM;
             lawsuit.receivedByHukumAt = new Date();
             lawsuit.panmudHukum = user;
+            await this.lawsuitsRepository.save(lawsuit);
+
+            return { payload: lawsuit };
+        } catch (error) {
+            this.logger.error(error.stack || error);
+            handleServiceError(error);
+        }
+    }
+
+    // ==================== PERMOHONAN WORKFLOW ====================
+
+    // PP -> Permohonan
+    public async handoverToPermohonan(id: string) {
+        try {
+            const lawsuit = await this.lawsuitsRepository.findById(id);
+            if (!lawsuit)
+                throw new NotFoundException(
+                    'Berkas permohonan tidak ditemukan',
+                );
+
+            if (lawsuit.type !== LawsuitType.PERMOHONAN) {
+                throw new BadRequestException(
+                    'Berkas ini bukan merupakan permohonan',
+                );
+            }
+
+            if (lawsuit.status !== LawsuitStatus.DRAFT) {
+                throw new BadRequestException(
+                    'Berkas permohonan harus dalam status DRAFT untuk diserahkan',
+                );
+            }
+
+            lawsuit.status = LawsuitStatus.SUBMITTED_TO_PERMOHONAN;
+            lawsuit.submittedToPermohonanAt = new Date();
+            await this.lawsuitsRepository.save(lawsuit);
+
+            return { payload: lawsuit };
+        } catch (error) {
+            this.logger.error(error.stack || error);
+            handleServiceError(error);
+        }
+    }
+
+    // Permohonan Receive
+    public async receiveByPermohonan(id: string, userId: string) {
+        try {
+            const user = await this.usersRepository.findById(userId);
+            if (!user) throw new NotFoundException('Pengguna tidak ditemukan');
+
+            const lawsuit = await this.lawsuitsRepository.findById(id);
+            if (!lawsuit)
+                throw new NotFoundException(
+                    'Berkas permohonan tidak ditemukan',
+                );
+
+            if (lawsuit.type !== LawsuitType.PERMOHONAN) {
+                throw new BadRequestException(
+                    'Berkas ini bukan merupakan permohonan',
+                );
+            }
+
+            if (lawsuit.status !== LawsuitStatus.SUBMITTED_TO_PERMOHONAN) {
+                throw new BadRequestException(
+                    'Berkas permohonan tidak menunggu Panmud Permohonan',
+                );
+            }
+
+            lawsuit.status = LawsuitStatus.RECEIVED_BY_PERMOHONAN;
+            lawsuit.receivedByPermohonanAt = new Date();
+            lawsuit.panmudPermohonan = user;
+            await this.lawsuitsRepository.save(lawsuit);
+
+            return { payload: lawsuit };
+        } catch (error) {
+            this.logger.error(error.stack || error);
+            handleServiceError(error);
+        }
+    }
+
+    // Permohonan -> Hukum
+    public async handoverFromPermohonanToHukum(id: string) {
+        try {
+            const lawsuit = await this.lawsuitsRepository.findById(id);
+            if (!lawsuit)
+                throw new NotFoundException(
+                    'Berkas permohonan tidak ditemukan',
+                );
+
+            if (lawsuit.type !== LawsuitType.PERMOHONAN) {
+                throw new BadRequestException(
+                    'Berkas ini bukan merupakan permohonan',
+                );
+            }
+
+            if (lawsuit.status !== LawsuitStatus.RECEIVED_BY_PERMOHONAN) {
+                throw new BadRequestException(
+                    'Berkas permohonan harus diterima oleh Panmud Permohonan terlebih dahulu',
+                );
+            }
+
+            lawsuit.status = LawsuitStatus.SUBMITTED_TO_HUKUM;
+            lawsuit.submittedToHukumAt = new Date();
             await this.lawsuitsRepository.save(lawsuit);
 
             return { payload: lawsuit };
@@ -542,62 +673,91 @@ export class LawsuitsService {
     }
 
     private generateTimeline(lawsuit: LawsuitEntity) {
-        const steps = [
-            {
-                title: 'Perkara Minutasi',
-                description: `Didaftarkan oleh ${lawsuit.pp?.fullName || 'PP'}`,
-                status: 'finish',
-                date: lawsuit.createdAt,
-                user: lawsuit.pp,
-            },
-            {
-                title: 'Verifikasi Panmud Gugatan',
-                description: 'Berkas diserahkan ke Panmud Gugatan',
-                status: 'wait',
-                date: lawsuit.submittedToGugatanAt,
-                user: lawsuit.panmudGugatan,
-            },
-            {
-                title: 'Proses BHT',
-                description: 'Verifikasi dan kelengkapan data',
-                status: 'wait',
-                date: lawsuit.receivedByGugatanAt,
-                user: lawsuit.panmudGugatan,
-            },
-            {
-                title: 'Arsip Panmud Hukum',
-                description: 'Berkas diserahkan ke Panmud Hukum',
-                status: 'wait',
-                date: lawsuit.submittedToHukumAt,
-                user: lawsuit.panmudHukum,
-            },
-        ];
+        // Check if this is a Permohonan or Gugatan
+        const isPermohonan = lawsuit.type === LawsuitType.PERMOHONAN;
+
+        type StepStatus = 'finish' | 'wait' | 'process';
+
+        // Define steps based on lawsuit type
+        const steps = isPermohonan
+            ? [
+                  {
+                      title: 'Perkara Minutasi',
+                      description: `Didaftarkan oleh ${lawsuit.pp?.fullName || 'PP'}`,
+                      status: 'finish' as StepStatus,
+                      date: lawsuit.createdAt,
+                      user: lawsuit.pp,
+                  },
+                  {
+                      title: 'Verifikasi Panmud Permohonan',
+                      description: 'Berkas diserahkan ke Panmud Permohonan',
+                      status: 'wait' as StepStatus,
+                      date: lawsuit.submittedToPermohonanAt,
+                      user: lawsuit.panmudPermohonan,
+                  },
+                  {
+                      title: 'Proses BHT',
+                      description: 'Verifikasi dan kelengkapan data',
+                      status: 'wait' as StepStatus,
+                      date: lawsuit.receivedByPermohonanAt,
+                      user: lawsuit.panmudPermohonan,
+                  },
+                  {
+                      title: 'Arsip Panmud Hukum',
+                      description: 'Berkas diserahkan ke Panmud Hukum',
+                      status: 'wait' as StepStatus,
+                      date: lawsuit.submittedToHukumAt,
+                      user: lawsuit.panmudHukum,
+                  },
+              ]
+            : [
+                  {
+                      title: 'Perkara Minutasi',
+                      description: `Didaftarkan oleh ${lawsuit.pp?.fullName || 'PP'}`,
+                      status: 'finish' as StepStatus,
+                      date: lawsuit.createdAt,
+                      user: lawsuit.pp,
+                  },
+                  {
+                      title: 'Verifikasi Panmud Gugatan',
+                      description: 'Berkas diserahkan ke Panmud Gugatan',
+                      status: 'wait' as StepStatus,
+                      date: lawsuit.submittedToGugatanAt,
+                      user: lawsuit.panmudGugatan,
+                  },
+                  {
+                      title: 'Proses BHT',
+                      description: 'Verifikasi dan kelengkapan data',
+                      status: 'wait' as StepStatus,
+                      date: lawsuit.receivedByGugatanAt,
+                      user: lawsuit.panmudGugatan,
+                  },
+                  {
+                      title: 'Arsip Panmud Hukum',
+                      description: 'Berkas diserahkan ke Panmud Hukum',
+                      status: 'wait' as StepStatus,
+                      date: lawsuit.submittedToHukumAt,
+                      user: lawsuit.panmudHukum,
+                  },
+              ];
 
         let currentStep = 0;
 
         // Determine step status based on current lawsuit status
-        // Step 1: Registrasi - initialized as finish
-
-        // Step 2: Handover to Gugatan
-        if (lawsuit.status !== LawsuitStatus.DRAFT) {
-            steps[1].status = 'finish';
-            currentStep = 1;
-        } else {
-            steps[1].status = 'process'; // Current active step for next action
-            currentStep = 0; // Completed 0, working on 1? Logic depends on frontend "current" usually 0-indexed active step
-        }
-
-        // Wait, current typically means "active" step or "last completed"?
-        // Frontend example: current={2} means step index 2 is active/process. 0,1 are done.
-
         if (lawsuit.status === LawsuitStatus.DRAFT) {
             currentStep = 0;
             steps[1].status = 'wait';
-        } else if (lawsuit.status === LawsuitStatus.SUBMITTED_TO_GUGATAN) {
+        } else if (
+            lawsuit.status === LawsuitStatus.SUBMITTED_TO_GUGATAN ||
+            lawsuit.status === LawsuitStatus.SUBMITTED_TO_PERMOHONAN
+        ) {
             currentStep = 1;
             steps[1].status = 'process';
             steps[0].status = 'finish';
-        } else if (lawsuit.status === LawsuitStatus.RECEIVED_BY_GUGATAN) {
+        } else if (
+            lawsuit.status === LawsuitStatus.RECEIVED_BY_GUGATAN ||
+            lawsuit.status === LawsuitStatus.RECEIVED_BY_PERMOHONAN
+        ) {
             currentStep = 2;
             steps[1].status = 'finish';
             steps[2].status = 'process';
@@ -608,7 +768,6 @@ export class LawsuitsService {
         } else if (lawsuit.status === LawsuitStatus.RECEIVED_BY_HUKUM) {
             currentStep = 4; // All done
             steps[3].status = 'finish';
-            // Maybe add a 5th step "Selesai" or just keep 4 as finished
         }
 
         // Adjust for received dates
