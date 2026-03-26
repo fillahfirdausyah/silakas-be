@@ -73,9 +73,12 @@ export class UpayaHukumService {
             }
 
             // Check lawsuit status
-            if (lawsuit.status !== LawsuitStatus.RECEIVED_BY_GUGATAN) {
+            if (
+                lawsuit.status !== LawsuitStatus.RECEIVED_BY_GUGATAN &&
+                lawsuit.status !== LawsuitStatus.RECEIVED_BY_PERMOHONAN
+            ) {
                 throw new BadRequestException(
-                    'Berkas gugatan harus sudah diterima oleh Panmud Gugatan',
+                    'Berkas gugatan harus sudah diterima oleh Panmud Gugatan atau Panmud Permohonan',
                 );
             }
 
