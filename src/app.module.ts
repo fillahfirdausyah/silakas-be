@@ -1,13 +1,14 @@
-import { Module, Logger } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import appConfig from './config/app.config';
 
 import { AuthModule } from './api/v1/auth/auth.module';
-import { UsersModule } from './api/v1/users/users.module';
-import { LawsuitsModule } from './api/v1/lawsuits/lawsuits.module';
 import { DocumentClassificationsModule } from './api/v1/document-classifications/document-classifications.module';
+import { LawsuitsModule } from './api/v1/lawsuits/lawsuits.module';
+import { UpayaHukumModule } from './api/v1/upaya-hukum/upaya-hukum.module';
+import { UsersModule } from './api/v1/users/users.module';
 
 @Module({
     imports: [
@@ -55,6 +56,7 @@ import { DocumentClassificationsModule } from './api/v1/document-classifications
         UsersModule,
         LawsuitsModule,
         DocumentClassificationsModule,
+        UpayaHukumModule,
     ],
 })
 export class AppModule {}

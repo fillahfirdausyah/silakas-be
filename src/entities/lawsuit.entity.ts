@@ -1,7 +1,8 @@
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
 import { BaseEntity } from './base.entity';
-import { UserEntity } from './user.entity';
 import { DocumentClassificationEntity } from './document-classification.entity';
+import { UpayaHukumEntity } from './upaya-hukum.entity';
+import { UserEntity } from './user.entity';
 
 export enum LawsuitStatus {
     DRAFT = 'DRAFT',
@@ -128,4 +129,9 @@ export class LawsuitEntity extends BaseEntity {
     @ManyToOne(() => UserEntity, (user) => user.jsLawsuits, { nullable: true })
     @JoinColumn({ name: 'js_id' })
     js: UserEntity | null;
+
+    @OneToOne(() => UpayaHukumEntity, (upayaHukum) => upayaHukum.lawsuit, {
+        nullable: true,
+    })
+    upayaHukum: UpayaHukumEntity | null;
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, ILike, In } from 'typeorm';
+import { FindOptionsWhere, ILike, In, Repository } from 'typeorm';
 import {
     LawsuitEntity,
     LawsuitType,
@@ -59,6 +59,7 @@ export class LawsuitsRepository {
                 'panmudGugatan',
                 'panmudHukum',
                 'documentClassification',
+                'upayaHukum',
             ],
         };
 
