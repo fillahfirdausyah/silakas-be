@@ -124,6 +124,8 @@ export class LawsuitsService {
                 js: jsUser,
                 description: dto.description || null,
                 ikrarDate: dto.ikrarDate ? new Date(dto.ikrarDate) : null,
+                pbtDate: dto.pbtDate ? new Date(dto.pbtDate) : null,
+                bhtDate: dto.bhtDate ? new Date(dto.bhtDate) : null,
                 type:
                     dto.type ||
                     (documentClassification.type as unknown as LawsuitType),

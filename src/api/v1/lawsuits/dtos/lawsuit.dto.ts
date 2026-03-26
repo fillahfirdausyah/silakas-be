@@ -50,6 +50,14 @@ export class CreateLawsuitDto {
     @IsOptional()
     ikrarDate?: string;
 
+    @IsDateString()
+    @IsOptional()
+    pbtDate?: string;
+
+    @IsDateString()
+    @IsOptional()
+    bhtDate?: string;
+
     @IsEnum(LawsuitType, {
         message: 'Type must be either gugatan or permohonan',
     })
