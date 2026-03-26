@@ -120,6 +120,13 @@ export class GenerateExcelDto {
     type?: LawsuitType;
 }
 
+export class BulkHandoverDto {
+    @IsArray()
+    @IsUUID('4', { each: true })
+    @ArrayMinSize(1)
+    lawsuitIds: string[];
+}
+
 export class GetLawsuitsDto {
     @IsOptional()
     @Type(() => Number)

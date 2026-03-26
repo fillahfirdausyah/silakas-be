@@ -419,6 +419,205 @@ export class LawsuitsService {
         }
     }
 
+    public async bulkHandover(lawsuitIds: string[], roleSlug: string) {
+        try {
+            const lawsuits =
+                await this.lawsuitsRepository.findByIds(lawsuitIds);
+
+            if (lawsuits.length !== lawsuitIds.length) {
+                const foundIds = new Set(lawsuits.map((l) => l.id));
+                const missingIds = lawsuitIds.filter((id) => !foundIds.has(id));
+                throw new NotFoundException(
+                    `Berkas tidak ditemukan: ${missingIds.join(', ')}`,
+                );
+            }
+
+            const results = [];
+            const errors: string[] = [];
+
+            for (const lawsuit of lawsuits) {
+                try {
+                    const isPermohonan =
+                        lawsuit.type === LawsuitType.PERMOHONAN;
+
+                    if (roleSlug === 'panitera-pengganti') {
+                        if (lawsuit.status !== LawsuitStatus.DRAFT) {
+                            errors.push(
+                                `${lawsuit.caseNumber}: harus dalam status DRAFT`,
+                            );
+                            continue;
+                        }
+                        if (isPermohonan) {
+                            lawsuit.status =
+                                LawsuitStatus.SUBMITTED_TO_PERMOHONAN;
+                            lawsuit.submittedToPermohonanAt = new Date();
+                        } else {
+                            lawsuit.status = LawsuitStatus.SUBMITTED_TO_GUGATAN;
+                            lawsuit.submittedToGugatanAt = new Date();
+                        }
+                    } else if (roleSlug === 'panmud-gugatan' && !isPermohonan) {
+                        if (
+                            lawsuit.status !== LawsuitStatus.RECEIVED_BY_GUGATAN
+                        ) {
+                            errors.push(
+                                `${lawsuit.caseNumber}: harus sudah diterima oleh Panmud Gugatan`,
+                            );
+                            continue;
+                        }
+                        lawsuit.status = LawsuitStatus.SUBMITTED_TO_HUKUM;
+                        lawsuit.submittedToHukumAt = new Date();
+                    } else if (
+                        roleSlug === 'panmud-permohonan' &&
+                        isPermohonan
+                    ) {
+                        if (
+                            lawsuit.status !==
+                            LawsuitStatus.RECEIVED_BY_PERMOHONAN
+                        ) {
+                            errors.push(
+                                `${lawsuit.caseNumber}: harus sudah diterima oleh Panmud Permohonan`,
+                            );
+                            continue;
+                        }
+                        lawsuit.status = LawsuitStatus.SUBMITTED_TO_HUKUM;
+                        lawsuit.submittedToHukumAt = new Date();
+                    } else {
+                        errors.push(
+                            `${lawsuit.caseNumber}: role tidak valid untuk penyerahan`,
+                        );
+                        continue;
+                    }
+
+                    await this.lawsuitsRepository.save(lawsuit);
+                    results.push(lawsuit);
+                } catch (err) {
+                    errors.push(
+                        `${lawsuit.caseNumber}: ${err.message || 'gagal'}`,
+                    );
+                }
+            }
+
+            if (results.length === 0) {
+                throw new BadRequestException(`${errors.join('; ')}`);
+            }
+
+            return {
+                payload: {
+                    success: results.length,
+                    failed: errors.length,
+                    errors,
+                },
+            };
+        } catch (error) {
+            this.logger.error(error.stack || error);
+            handleServiceError(error);
+        }
+    }
+
+    public async bulkReceive(
+        lawsuitIds: string[],
+        roleSlug: string,
+        userId: string,
+    ) {
+        try {
+            const user = await this.usersRepository.findById(userId);
+            if (!user) throw new NotFoundException('Pengguna tidak ditemukan');
+
+            const lawsuits =
+                await this.lawsuitsRepository.findByIds(lawsuitIds);
+
+            if (lawsuits.length !== lawsuitIds.length) {
+                const foundIds = new Set(lawsuits.map((l) => l.id));
+                const missingIds = lawsuitIds.filter((id) => !foundIds.has(id));
+                throw new NotFoundException(
+                    `Berkas tidak ditemukan: ${missingIds.join(', ')}`,
+                );
+            }
+
+            const results = [];
+            const errors: string[] = [];
+
+            for (const lawsuit of lawsuits) {
+                try {
+                    const isPermohonan =
+                        lawsuit.type === LawsuitType.PERMOHONAN;
+
+                    if (roleSlug === 'panmud-gugatan' && !isPermohonan) {
+                        if (
+                            lawsuit.status !==
+                            LawsuitStatus.SUBMITTED_TO_GUGATAN
+                        ) {
+                            errors.push(
+                                `${lawsuit.caseNumber}: belum diserahkan ke Panmud Gugatan`,
+                            );
+                            continue;
+                        }
+                        lawsuit.status = LawsuitStatus.RECEIVED_BY_GUGATAN;
+                        lawsuit.receivedByGugatanAt = new Date();
+                        lawsuit.panmudGugatan = user;
+                    } else if (
+                        roleSlug === 'panmud-permohonan' &&
+                        isPermohonan
+                    ) {
+                        if (
+                            lawsuit.status !==
+                            LawsuitStatus.SUBMITTED_TO_PERMOHONAN
+                        ) {
+                            errors.push(
+                                `${lawsuit.caseNumber}: belum diserahkan ke Panmud Permohonan`,
+                            );
+                            continue;
+                        }
+                        lawsuit.status = LawsuitStatus.RECEIVED_BY_PERMOHONAN;
+                        lawsuit.receivedByPermohonanAt = new Date();
+                        lawsuit.panmudPermohonan = user;
+                    } else if (roleSlug === 'panmud-hukum') {
+                        if (
+                            lawsuit.status !== LawsuitStatus.SUBMITTED_TO_HUKUM
+                        ) {
+                            errors.push(
+                                `${lawsuit.caseNumber}: belum diserahkan ke Panmud Hukum`,
+                            );
+                            continue;
+                        }
+                        lawsuit.status = LawsuitStatus.RECEIVED_BY_HUKUM;
+                        lawsuit.receivedByHukumAt = new Date();
+                        lawsuit.panmudHukum = user;
+                    } else {
+                        errors.push(
+                            `${lawsuit.caseNumber}: role tidak valid untuk penerimaan`,
+                        );
+                        continue;
+                    }
+
+                    await this.lawsuitsRepository.save(lawsuit);
+                    results.push(lawsuit);
+                } catch (err) {
+                    errors.push(
+                        `${lawsuit.caseNumber}: ${err.message || 'gagal'}`,
+                    );
+                }
+            }
+
+            if (results.length === 0) {
+                throw new BadRequestException(
+                    `Tidak ada berkas yang berhasil diterima. Errors: ${errors.join('; ')}`,
+                );
+            }
+
+            return {
+                payload: {
+                    success: results.length,
+                    failed: errors.length,
+                    errors,
+                },
+            };
+        } catch (error) {
+            this.logger.error(error.stack || error);
+            handleServiceError(error);
+        }
+    }
+
     public async generateExcelReport() {
         try {
             const [lawsuits] = await this.lawsuitsRepository.findByPagination({

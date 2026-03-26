@@ -17,6 +17,7 @@ import { AuthGuard } from '../../auth/guards/auth.guard';
 import { Roles } from '../../../../shared/decorators/roles.decorator';
 import { LawsuitsService } from '../services/lawsuits.service';
 import {
+    BulkHandoverDto,
     CreateLawsuitDto,
     GenerateExcelDto,
     UpdateLawsuitDto,
@@ -86,6 +87,33 @@ export class LawsuitsController {
         const result = await this.lawsuitsService.create(req.userId, body);
         return {
             message: 'Berkas berhasil dibuat',
+            payload: result.payload,
+        };
+    }
+
+    @Post('bulk-handover')
+    @Roles('panitera-pengganti', 'panmud-gugatan', 'panmud-permohonan')
+    async bulkHandover(@Req() req: any, @Body() body: BulkHandoverDto) {
+        const result = await this.lawsuitsService.bulkHandover(
+            body.lawsuitIds,
+            req.role,
+        );
+        return {
+            message: 'Bulk serah terima berhasil',
+            payload: result.payload,
+        };
+    }
+
+    @Post('bulk-receive')
+    @Roles('panmud-gugatan', 'panmud-permohonan', 'panmud-hukum')
+    async bulkReceive(@Req() req: any, @Body() body: BulkHandoverDto) {
+        const result = await this.lawsuitsService.bulkReceive(
+            body.lawsuitIds,
+            req.role,
+            req.userId,
+        );
+        return {
+            message: 'Bulk penerimaan berhasil',
             payload: result.payload,
         };
     }
