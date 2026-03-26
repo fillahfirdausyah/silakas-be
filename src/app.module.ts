@@ -7,6 +7,7 @@ import appConfig from './config/app.config';
 import { AuthModule } from './api/v1/auth/auth.module';
 import { DocumentClassificationsModule } from './api/v1/document-classifications/document-classifications.module';
 import { LawsuitsModule } from './api/v1/lawsuits/lawsuits.module';
+import { DashboardModule } from './api/v1/dashboard/dashboard.module';
 import { UpayaHukumModule } from './api/v1/upaya-hukum/upaya-hukum.module';
 import { UsersModule } from './api/v1/users/users.module';
 
@@ -55,6 +56,7 @@ import { UsersModule } from './api/v1/users/users.module';
         AuthModule,
         UsersModule,
         LawsuitsModule,
+        DashboardModule,
         DocumentClassificationsModule,
         UpayaHukumModule,
     ],
