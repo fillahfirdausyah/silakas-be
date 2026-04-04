@@ -20,6 +20,7 @@ export class UsersRepository {
         search: string;
         sortBy: string;
         sortType: string;
+        roleId?: string;
     }) {
         const offset =
             metadata.page > 1 ? metadata.limit * (metadata.page - 1) : 0;
@@ -34,6 +35,14 @@ export class UsersRepository {
             where = searchConditions;
         } else {
             where = [baseWhere];
+        }
+
+        // Apply role filter
+        if (metadata.roleId) {
+            where = where.map((w) => ({
+                ...w,
+                role: { id: metadata.roleId },
+            }));
         }
 
         const queryOptions = {

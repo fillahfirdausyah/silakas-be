@@ -35,6 +35,7 @@ export class UsersController {
             search: query.search,
             sortBy: query.sortBy,
             sortType: query.sortType,
+            roleId: query.roleId,
         });
 
         return {

@@ -4,6 +4,7 @@ import {
     IsOptional,
     IsString,
     IsNotEmpty,
+    IsUUID,
     Max,
     Min,
 } from 'class-validator';
@@ -39,4 +40,8 @@ export class GetUsersDto {
     })
     @Transform(({ value }) => value.toUpperCase())
     sortType: string = 'ASC';
+
+    @IsUUID('4', { message: 'Role id must be UUID' })
+    @IsOptional()
+    roleId?: string;
 }

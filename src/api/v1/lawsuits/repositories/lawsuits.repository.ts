@@ -32,6 +32,8 @@ export class LawsuitsRepository {
         status?: LawsuitStatus;
         startDate?: string;
         endDate?: string;
+        bhtStartDate?: string;
+        bhtEndDate?: string;
         ppId?: string;
     }) {
         const offset =
@@ -91,6 +93,22 @@ export class LawsuitsRepository {
                 }));
             } else {
                 where = { ...where, decisionDate: dateFilter };
+            }
+        }
+
+        // Apply BHT date range filter
+        const bhtDateFilter = this.buildDateFilter(
+            metadata.bhtStartDate,
+            metadata.bhtEndDate,
+        );
+        if (bhtDateFilter) {
+            if (Array.isArray(where)) {
+                where = where.map((w) => ({
+                    ...w,
+                    bhtDate: bhtDateFilter,
+                }));
+            } else {
+                where = { ...where, bhtDate: bhtDateFilter };
             }
         }
 

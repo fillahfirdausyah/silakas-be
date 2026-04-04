@@ -23,6 +23,7 @@ export class UsersService {
         search: string;
         sortBy: string;
         sortType: string;
+        roleId?: string;
     }) {
         try {
             const [users, count] =

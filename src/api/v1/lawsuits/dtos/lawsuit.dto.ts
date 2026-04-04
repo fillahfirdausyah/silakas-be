@@ -172,6 +172,14 @@ export class GetLawsuitsDto {
     @IsOptional()
     endDate?: string;
 
+    @IsDateString()
+    @IsOptional()
+    bhtStartDate?: string;
+
+    @IsDateString()
+    @IsOptional()
+    bhtEndDate?: string;
+
     @IsUUID('4', { message: 'PP id must be UUID' })
     @IsOptional()
     ppId?: string;
