@@ -6,6 +6,7 @@ import {
     IsEnum,
     IsNotEmpty,
     IsOptional,
+    IsString,
     IsUUID,
     ValidateNested,
 } from 'class-validator';
@@ -82,4 +83,16 @@ export class GenerateBeritaAcaraDto {
     @IsUUID('4', { each: true })
     @ArrayMinSize(1)
     upayaHukumIds: string[];
+
+    @IsUUID('4', { message: 'Pihak Pertama id must be UUID' })
+    @IsNotEmpty({ message: 'Pihak Pertama is required' })
+    pihakPertamaId: string;
+
+    @IsUUID('4', { message: 'Pihak Kedua id must be UUID' })
+    @IsNotEmpty({ message: 'Pihak Kedua is required' })
+    pihakKeduaId: string;
+
+    @IsString()
+    @IsOptional()
+    requesterRole?: string;
 }

@@ -118,6 +118,18 @@ export class GenerateExcelDto {
     })
     @IsOptional()
     type?: LawsuitType;
+
+    @IsUUID('4', { message: 'Pihak Pertama id must be UUID' })
+    @IsNotEmpty({ message: 'Pihak Pertama is required' })
+    pihakPertamaId: string;
+
+    @IsUUID('4', { message: 'Pihak Kedua id must be UUID' })
+    @IsNotEmpty({ message: 'Pihak Kedua is required' })
+    pihakKeduaId: string;
+
+    @IsString()
+    @IsOptional()
+    requesterRole?: string;
 }
 
 export class BulkHandoverDto {
