@@ -96,3 +96,32 @@ export class GenerateBeritaAcaraDto {
     @IsOptional()
     requesterRole?: string;
 }
+
+// DTOs for handover to Hukum from Upaya Hukum
+export class BulkHandoverToHukumItemDto {
+    @IsUUID('4', { message: 'Upaya hukum id must be UUID' })
+    @IsNotEmpty({ message: 'Upaya hukum id is required' })
+    upayaHukumId: string;
+}
+
+export class BulkHandoverToHukumDto {
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => BulkHandoverToHukumItemDto)
+    @ArrayMinSize(1)
+    items: BulkHandoverToHukumItemDto[];
+}
+
+export class BulkReceiveByHukumItemDto {
+    @IsUUID('4', { message: 'Upaya hukum id must be UUID' })
+    @IsNotEmpty({ message: 'Upaya hukum id is required' })
+    upayaHukumId: string;
+}
+
+export class BulkReceiveByHukumDto {
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => BulkReceiveByHukumItemDto)
+    @ArrayMinSize(1)
+    items: BulkReceiveByHukumItemDto[];
+}

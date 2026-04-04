@@ -13,7 +13,9 @@ import { LawsuitsRepository } from '../../lawsuits/repositories/lawsuits.reposit
 import { UsersRepository } from '../../users/repositories/users.repository';
 import {
     BulkCreateUpayaHukumDto,
+    BulkHandoverToHukumDto,
     BulkPromoteToKasasiDto,
+    BulkReceiveByHukumDto,
     CreateUpayaHukumDto,
     GenerateBeritaAcaraDto,
     GetUpayaHukumDto,
@@ -579,6 +581,138 @@ export class UpayaHukumService {
             this.logger.error(error.stack || error);
             handleServiceError(error);
         }
+    }
+
+    // ==================== HANDOVER TO HUKUM FROM UPAYA HUKUM ====================
+
+    async bulkHandoverToHukum(dto: BulkHandoverToHukumDto) {
+        const results = [];
+        const errors: string[] = [];
+
+        for (const item of dto.items) {
+            try {
+                const upayaHukum = await this.upayaHukumRepository.findById(
+                    item.upayaHukumId,
+                );
+                if (!upayaHukum) {
+                    errors.push(
+                        `${item.upayaHukumId}: Data Upaya Hukum tidak ditemukan`,
+                    );
+                    continue;
+                }
+
+                const lawsuit = upayaHukum.lawsuit;
+                if (!lawsuit) {
+                    errors.push(`${item.upayaHukumId}: Berkas tidak ditemukan`);
+                    continue;
+                }
+
+                // Check if lawsuit can be handed over to Hukum
+                // It should be received by Gugatan or Permohonan first
+                if (
+                    lawsuit.status !== LawsuitStatus.RECEIVED_BY_GUGATAN &&
+                    lawsuit.status !== LawsuitStatus.RECEIVED_BY_PERMOHONAN
+                ) {
+                    errors.push(
+                        `${lawsuit.caseNumber}: Berkas harus sudah diterima oleh Panmud Gugatan/Permohonan`,
+                    );
+                    continue;
+                }
+
+                // Update lawsuit status
+                lawsuit.status = LawsuitStatus.SUBMITTED_TO_HUKUM;
+                lawsuit.submittedToHukumAt = new Date();
+                await this.lawsuitsRepository.save(lawsuit);
+
+                results.push({
+                    upayaHukumId: upayaHukum.id,
+                    lawsuitId: lawsuit.id,
+                    caseNumber: lawsuit.caseNumber,
+                });
+            } catch (error: unknown) {
+                const errMsg =
+                    error instanceof Error ? error.message : 'Unknown error';
+                this.logger.error(
+                    `Bulk handover to hukum error for ${item.upayaHukumId}: ${errMsg}`,
+                );
+                errors.push(`${item.upayaHukumId}: ${errMsg}`);
+            }
+        }
+
+        if (results.length === 0 && errors.length > 0) {
+            throw new BadRequestException(errors.join('; '));
+        }
+
+        return {
+            payload: results,
+            errors: errors.length > 0 ? errors : undefined,
+        };
+    }
+
+    async bulkReceiveByHukum(dto: BulkReceiveByHukumDto, userId: string) {
+        const user = await this.usersRepository.findById(userId);
+        if (!user) {
+            throw new NotFoundException('Pengguna tidak ditemukan');
+        }
+
+        const results = [];
+        const errors: string[] = [];
+
+        for (const item of dto.items) {
+            try {
+                const upayaHukum = await this.upayaHukumRepository.findById(
+                    item.upayaHukumId,
+                );
+                if (!upayaHukum) {
+                    errors.push(
+                        `${item.upayaHukumId}: Data Upaya Hukum tidak ditemukan`,
+                    );
+                    continue;
+                }
+
+                const lawsuit = upayaHukum.lawsuit;
+                if (!lawsuit) {
+                    errors.push(`${item.upayaHukumId}: Berkas tidak ditemukan`);
+                    continue;
+                }
+
+                // Check if lawsuit is waiting for Hukum to receive
+                if (lawsuit.status !== LawsuitStatus.SUBMITTED_TO_HUKUM) {
+                    errors.push(
+                        `${lawsuit.caseNumber}: Berkas belum diserahkan ke Panmud Hukum`,
+                    );
+                    continue;
+                }
+
+                // Update lawsuit status
+                lawsuit.status = LawsuitStatus.RECEIVED_BY_HUKUM;
+                lawsuit.receivedByHukumAt = new Date();
+                lawsuit.panmudHukum = user;
+                await this.lawsuitsRepository.save(lawsuit);
+
+                results.push({
+                    upayaHukumId: upayaHukum.id,
+                    lawsuitId: lawsuit.id,
+                    caseNumber: lawsuit.caseNumber,
+                });
+            } catch (error: unknown) {
+                const errMsg =
+                    error instanceof Error ? error.message : 'Unknown error';
+                this.logger.error(
+                    `Bulk receive by hukum error for ${item.upayaHukumId}: ${errMsg}`,
+                );
+                errors.push(`${item.upayaHukumId}: ${errMsg}`);
+            }
+        }
+
+        if (results.length === 0 && errors.length > 0) {
+            throw new BadRequestException(errors.join('; '));
+        }
+
+        return {
+            payload: results,
+            errors: errors.length > 0 ? errors : undefined,
+        };
     }
 }
 

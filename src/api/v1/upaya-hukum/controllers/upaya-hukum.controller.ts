@@ -6,6 +6,7 @@ import {
     Patch,
     Post,
     Query,
+    Req,
     StreamableFile,
     UseGuards,
 } from '@nestjs/common';
@@ -15,7 +16,9 @@ import { Roles } from '../../../../shared/decorators/roles.decorator';
 import { AuthGuard } from '../../auth/guards/auth.guard';
 import {
     BulkCreateUpayaHukumDto,
+    BulkHandoverToHukumDto,
     BulkPromoteToKasasiDto,
+    BulkReceiveByHukumDto,
     CreateUpayaHukumDto,
     GenerateBeritaAcaraDto,
     GetUpayaHukumDto,
@@ -106,6 +109,36 @@ export class UpayaHukumController {
         return {
             message: 'Berkas berhasil dipindahkan ke Kasasi',
             payload: result.payload,
+        };
+    }
+
+    // ==================== HANDOVER TO HUKUM FROM UPAYA HUKUM ====================
+
+    @Post('bulk-handover-to-hukum')
+    @Roles('panmud-gugatan', 'panmud-permohonan')
+    async bulkHandoverToHukum(@Body() body: BulkHandoverToHukumDto) {
+        const result = await this.upayaHukumService.bulkHandoverToHukum(body);
+        return {
+            message: 'Bulk serah terima ke Panmud Hukum berhasil',
+            payload: result.payload,
+            errors: result.errors,
+        };
+    }
+
+    @Post('bulk-receive-by-hukum')
+    @Roles('panmud-hukum')
+    async bulkReceiveByHukum(
+        @Req() req: any,
+        @Body() body: BulkReceiveByHukumDto,
+    ) {
+        const result = await this.upayaHukumService.bulkReceiveByHukum(
+            body,
+            req.userId,
+        );
+        return {
+            message: 'Bulk penerimaan oleh Panmud Hukum berhasil',
+            payload: result.payload,
+            errors: result.errors,
         };
     }
 }

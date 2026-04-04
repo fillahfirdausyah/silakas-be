@@ -5,6 +5,7 @@ import {
     FindOptionsWhere,
     ILike,
     In,
+    IsNull,
     LessThanOrEqual,
     MoreThanOrEqual,
     Repository,
@@ -110,6 +111,17 @@ export class LawsuitsRepository {
             } else {
                 where = { ...where, bhtDate: bhtDateFilter };
             }
+        }
+
+        // Exclude lawsuits that already have upayaHukum (Banding/Kasasi)
+        // This prevents documents in Upaya Hukum from appearing in Gugatan/Permohonan lists
+        if (Array.isArray(where)) {
+            where = where.map((w) => ({
+                ...w,
+                upayaHukum: IsNull(),
+            }));
+        } else {
+            where = { ...where, upayaHukum: IsNull() };
         }
 
         const queryOptions = {
