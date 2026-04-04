@@ -6,18 +6,33 @@ import { GetDashboardDto } from '../dtos/dashboard.dto';
 export class DashboardService {
     constructor(private readonly dashboardRepository: DashboardRepository) {}
 
-    async getStatistics(query: GetDashboardDto) {
+    async getStatistics(
+        query: GetDashboardDto,
+        userId?: string,
+        roleSlug?: string,
+    ) {
         const { month, year } = query;
         const resolvedYear = year ?? new Date().getFullYear();
 
         const [summary, berkasPerKlasifikasi, trendBulanan] = await Promise.all(
             [
-                this.dashboardRepository.getSummary(month, resolvedYear),
+                this.dashboardRepository.getSummary(
+                    month,
+                    resolvedYear,
+                    userId,
+                    roleSlug,
+                ),
                 this.dashboardRepository.getBerkasPerKlasifikasi(
                     month,
                     resolvedYear,
+                    userId,
+                    roleSlug,
                 ),
-                this.dashboardRepository.getTrendBulanan(resolvedYear),
+                this.dashboardRepository.getTrendBulanan(
+                    resolvedYear,
+                    userId,
+                    roleSlug,
+                ),
             ],
         );
 

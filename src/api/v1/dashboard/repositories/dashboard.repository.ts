@@ -17,8 +17,18 @@ export class DashboardRepository {
         private readonly upayaHukumRepo: Repository<UpayaHukumEntity>,
     ) {}
 
-    async getSummary(month?: number, year?: number) {
+    async getSummary(
+        month?: number,
+        year?: number,
+        userId?: string,
+        roleSlug?: string,
+    ) {
         const qb = this.lawsuitRepo.createQueryBuilder('l');
+
+        // Role-based filtering: Panitera Pengganti only sees their own data
+        if (roleSlug === 'panitera-pengganti' && userId) {
+            qb.andWhere('l.pp_id = :userId', { userId });
+        }
 
         if (month && year) {
             qb.andWhere('MONTH(l.created_at) = :month', { month });
@@ -32,23 +42,32 @@ export class DashboardRepository {
         const belumDiserahkanGugatan = await this.countByCondition(
             month,
             year,
+            userId,
+            roleSlug,
             { status: LawsuitStatus.DRAFT, type: LawsuitType.GUGATAN },
         );
 
         const belumDiserahkanPermohonan = await this.countByCondition(
             month,
             year,
+            userId,
+            roleSlug,
             { status: LawsuitStatus.DRAFT, type: LawsuitType.PERMOHONAN },
         );
 
-        const sudahDiserahkanHukum = await this.countByStatusIn(month, year, [
-            LawsuitStatus.SUBMITTED_TO_HUKUM,
-            LawsuitStatus.RECEIVED_BY_HUKUM,
-        ]);
+        const sudahDiserahkanHukum = await this.countByStatusIn(
+            month,
+            year,
+            userId,
+            roleSlug,
+            [LawsuitStatus.SUBMITTED_TO_HUKUM, LawsuitStatus.RECEIVED_BY_HUKUM],
+        );
 
         const belumDiserahkanHukum = await this.countByStatusNotIn(
             month,
             year,
+            userId,
+            roleSlug,
             [
                 LawsuitStatus.DRAFT,
                 LawsuitStatus.SUBMITTED_TO_HUKUM,
@@ -56,11 +75,20 @@ export class DashboardRepository {
             ],
         );
 
-        const diterimaHukum = await this.countByCondition(month, year, {
-            status: LawsuitStatus.RECEIVED_BY_HUKUM,
-        });
+        const diterimaHukum = await this.countByCondition(
+            month,
+            year,
+            userId,
+            roleSlug,
+            { status: LawsuitStatus.RECEIVED_BY_HUKUM },
+        );
 
-        const upayaHukumAktif = await this.countUpayaHukum(month, year);
+        const upayaHukumAktif = await this.countUpayaHukum(
+            month,
+            year,
+            userId,
+            roleSlug,
+        );
 
         return {
             totalBerkas,
@@ -73,7 +101,12 @@ export class DashboardRepository {
         };
     }
 
-    async getBerkasPerKlasifikasi(month?: number, year?: number) {
+    async getBerkasPerKlasifikasi(
+        month?: number,
+        year?: number,
+        userId?: string,
+        roleSlug?: string,
+    ) {
         const qb = this.lawsuitRepo
             .createQueryBuilder('l')
             .select('l.classification', 'classification')
@@ -97,6 +130,11 @@ export class DashboardRepository {
             )
             .where('l.classification IS NOT NULL');
 
+        // Role-based filtering: Panitera Pengganti only sees their own data
+        if (roleSlug === 'panitera-pengganti' && userId) {
+            qb.andWhere('l.pp_id = :userId', { userId });
+        }
+
         if (month && year) {
             qb.andWhere('MONTH(l.created_at) = :month', { month });
             qb.andWhere('YEAR(l.created_at) = :year', { year });
@@ -111,7 +149,7 @@ export class DashboardRepository {
             .getRawMany();
     }
 
-    async getTrendBulanan(year: number) {
+    async getTrendBulanan(year: number, userId?: string, roleSlug?: string) {
         const qb = this.lawsuitRepo
             .createQueryBuilder('l')
             .select('MONTH(l.created_at)', 'month')
@@ -123,9 +161,14 @@ export class DashboardRepository {
                 `SUM(CASE WHEN l.type = '${LawsuitType.PERMOHONAN}' THEN 1 ELSE 0 END)`,
                 'permohonan',
             )
-            .where('YEAR(l.created_at) = :year', { year })
-            .groupBy('MONTH(l.created_at)')
-            .orderBy('MONTH(l.created_at)', 'ASC');
+            .where('YEAR(l.created_at) = :year', { year });
+
+        // Role-based filtering: Panitera Pengganti only sees their own data
+        if (roleSlug === 'panitera-pengganti' && userId) {
+            qb.andWhere('l.pp_id = :userId', { userId });
+        }
+
+        qb.groupBy('MONTH(l.created_at)').orderBy('MONTH(l.created_at)', 'ASC');
 
         return qb.getRawMany();
     }
@@ -133,9 +176,16 @@ export class DashboardRepository {
     private async countByCondition(
         month: number | undefined,
         year: number | undefined,
+        userId: string | undefined,
+        roleSlug: string | undefined,
         conditions: Partial<Pick<LawsuitEntity, 'status' | 'type'>>,
     ): Promise<number> {
         const qb = this.lawsuitRepo.createQueryBuilder('l');
+
+        // Role-based filtering: Panitera Pengganti only sees their own data
+        if (roleSlug === 'panitera-pengganti' && userId) {
+            qb.andWhere('l.pp_id = :userId', { userId });
+        }
 
         if (conditions.status) {
             qb.andWhere('l.status = :status', { status: conditions.status });
@@ -157,11 +207,18 @@ export class DashboardRepository {
     private async countByStatusIn(
         month: number | undefined,
         year: number | undefined,
+        userId: string | undefined,
+        roleSlug: string | undefined,
         statuses: LawsuitStatus[],
     ): Promise<number> {
         const qb = this.lawsuitRepo
             .createQueryBuilder('l')
             .where('l.status IN (:...statuses)', { statuses });
+
+        // Role-based filtering: Panitera Pengganti only sees their own data
+        if (roleSlug === 'panitera-pengganti' && userId) {
+            qb.andWhere('l.pp_id = :userId', { userId });
+        }
 
         if (month && year) {
             qb.andWhere('MONTH(l.created_at) = :month', { month });
@@ -176,6 +233,8 @@ export class DashboardRepository {
     private async countByStatusNotIn(
         month: number | undefined,
         year: number | undefined,
+        userId: string | undefined,
+        roleSlug: string | undefined,
         excludeStatuses: LawsuitStatus[],
     ): Promise<number> {
         const qb = this.lawsuitRepo
@@ -183,6 +242,11 @@ export class DashboardRepository {
             .where('l.status NOT IN (:...statuses)', {
                 statuses: excludeStatuses,
             });
+
+        // Role-based filtering: Panitera Pengganti only sees their own data
+        if (roleSlug === 'panitera-pengganti' && userId) {
+            qb.andWhere('l.pp_id = :userId', { userId });
+        }
 
         if (month && year) {
             qb.andWhere('MONTH(l.created_at) = :month', { month });
@@ -197,8 +261,17 @@ export class DashboardRepository {
     private async countUpayaHukum(
         month?: number,
         year?: number,
+        userId?: string,
+        roleSlug?: string,
     ): Promise<number> {
         const qb = this.upayaHukumRepo.createQueryBuilder('u');
+
+        // Role-based filtering: Panitera Pengganti only sees their own data
+        // Need to join through lawsuit to filter by pp_id
+        if (roleSlug === 'panitera-pengganti' && userId) {
+            qb.innerJoin('u.lawsuit', 'l');
+            qb.andWhere('l.pp_id = :userId', { userId });
+        }
 
         if (month && year) {
             qb.andWhere('MONTH(u.created_at) = :month', { month });
