@@ -51,6 +51,14 @@ export class UpayaHukumService {
                 tanggalPutus: uh.lawsuit.decisionDate,
                 tanggalPBT: uh.lawsuit.pbtDate,
                 tanggalBHT: uh.lawsuit.bhtDate,
+                // Banding dates
+                putusDateBanding: uh.putusDateBanding,
+                pbtDateBanding: uh.pbtDateBanding,
+                bhtDateBanding: uh.bhtDateBanding,
+                // Kasasi dates
+                putusDateKasasi: uh.putusDateKasasi,
+                pbtDateKasasi: uh.pbtDateKasasi,
+                bhtDateKasasi: uh.bhtDateKasasi,
                 createdAt: uh.createdAt,
                 updatedAt: uh.updatedAt,
             }));
@@ -267,14 +275,54 @@ export class UpayaHukumService {
                 throw new NotFoundException('Data Upaya Hukum tidak ditemukan');
             }
 
-            // Update tanggalDaftar based on current type
-            upayaHukum.tanggalDaftar = new Date(dto.tanggalDaftar);
+            // Update tanggalDaftar if provided
+            if (dto.tanggalDaftar) {
+                upayaHukum.tanggalDaftar = new Date(dto.tanggalDaftar);
 
-            // Also update the specific date based on type
-            if (upayaHukum.type === UpayaHukumType.BANDING) {
-                upayaHukum.tanggalDaftarBanding = new Date(dto.tanggalDaftar);
-            } else if (upayaHukum.type === UpayaHukumType.KASASI) {
-                upayaHukum.tanggalDaftarKasasi = new Date(dto.tanggalDaftar);
+                // Also update the specific date based on type
+                if (upayaHukum.type === UpayaHukumType.BANDING) {
+                    upayaHukum.tanggalDaftarBanding = new Date(
+                        dto.tanggalDaftar,
+                    );
+                } else if (upayaHukum.type === UpayaHukumType.KASASI) {
+                    upayaHukum.tanggalDaftarKasasi = new Date(
+                        dto.tanggalDaftar,
+                    );
+                }
+            }
+
+            // Update Banding dates if provided
+            if (dto.putusDateBanding !== undefined) {
+                upayaHukum.putusDateBanding = dto.putusDateBanding
+                    ? new Date(dto.putusDateBanding)
+                    : null;
+            }
+            if (dto.pbtDateBanding !== undefined) {
+                upayaHukum.pbtDateBanding = dto.pbtDateBanding
+                    ? new Date(dto.pbtDateBanding)
+                    : null;
+            }
+            if (dto.bhtDateBanding !== undefined) {
+                upayaHukum.bhtDateBanding = dto.bhtDateBanding
+                    ? new Date(dto.bhtDateBanding)
+                    : null;
+            }
+
+            // Update Kasasi dates if provided
+            if (dto.putusDateKasasi !== undefined) {
+                upayaHukum.putusDateKasasi = dto.putusDateKasasi
+                    ? new Date(dto.putusDateKasasi)
+                    : null;
+            }
+            if (dto.pbtDateKasasi !== undefined) {
+                upayaHukum.pbtDateKasasi = dto.pbtDateKasasi
+                    ? new Date(dto.pbtDateKasasi)
+                    : null;
+            }
+            if (dto.bhtDateKasasi !== undefined) {
+                upayaHukum.bhtDateKasasi = dto.bhtDateKasasi
+                    ? new Date(dto.bhtDateKasasi)
+                    : null;
             }
 
             await this.upayaHukumRepository.save(upayaHukum);

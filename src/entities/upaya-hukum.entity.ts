@@ -51,4 +51,48 @@ export class UpayaHukumEntity extends BaseEntity {
         nullable: true,
     })
     tanggalDaftarKasasi: Date | null;
+
+    // Banding dates
+    @Column({
+        name: 'putus_date_banding',
+        type: 'date',
+        nullable: true,
+    })
+    putusDateBanding: Date | null;
+
+    @Column({
+        name: 'pbt_date_banding',
+        type: 'date',
+        nullable: true,
+    })
+    pbtDateBanding: Date | null;
+
+    @Column({
+        name: 'bht_date_banding',
+        type: 'date',
+        nullable: true,
+    })
+    bhtDateBanding: Date | null;
+
+    // Kasasi dates
+    @Column({
+        name: 'putus_date_kasasi',
+        type: 'date',
+        nullable: true,
+    })
+    putusDateKasasi: Date | null;
+
+    @Column({
+        name: 'pbt_date_kasasi',
+        type: 'date',
+        nullable: true,
+    })
+    pbtDateKasasi: Date | null;
+
+    @Column({
+        name: 'bht_date_kasasi',
+        type: 'date',
+        nullable: true,
+    })
+    bhtDateKasasi: Date | null;
 }

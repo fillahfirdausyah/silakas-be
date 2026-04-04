@@ -30,8 +30,34 @@ export class PromoteToKasasiDto {
 
 export class UpdateUpayaHukumDto {
     @IsDateString({}, { message: 'Tanggal daftar must be a valid date' })
-    @IsNotEmpty({ message: 'Tanggal daftar is required' })
-    tanggalDaftar: string;
+    @IsOptional()
+    tanggalDaftar?: string;
+
+    // Banding dates
+    @IsDateString({}, { message: 'Putus date banding must be a valid date' })
+    @IsOptional()
+    putusDateBanding?: string;
+
+    @IsDateString({}, { message: 'PBT date banding must be a valid date' })
+    @IsOptional()
+    pbtDateBanding?: string;
+
+    @IsDateString({}, { message: 'BHT date banding must be a valid date' })
+    @IsOptional()
+    bhtDateBanding?: string;
+
+    // Kasasi dates
+    @IsDateString({}, { message: 'Putus date kasasi must be a valid date' })
+    @IsOptional()
+    putusDateKasasi?: string;
+
+    @IsDateString({}, { message: 'PBT date kasasi must be a valid date' })
+    @IsOptional()
+    pbtDateKasasi?: string;
+
+    @IsDateString({}, { message: 'BHT date kasasi must be a valid date' })
+    @IsOptional()
+    bhtDateKasasi?: string;
 }
 
 export class GetUpayaHukumDto {
