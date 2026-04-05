@@ -369,38 +369,26 @@ export class UpayaHukumService {
                 );
             }
 
-            // Check if requester is panitera-pengganti to exclude BHT column
-            const isPaniteraPengganti =
-                dto.requesterRole === 'panitera-pengganti';
-
-            // Determine type for title
+            // Determine type for title and column header
             const type = upayaHukumList[0]?.type || UpayaHukumType.BANDING;
             const typeLabel =
                 type === UpayaHukumType.BANDING ? 'BANDING' : 'KASASI';
+            const putusDateLabel =
+                type === UpayaHukumType.BANDING
+                    ? 'Putus Banding'
+                    : 'Putus Kasasi';
 
             const workbook = new ExcelJS.Workbook();
             const worksheet = workbook.addWorksheet('Berita Acara');
 
-            // Column widths - combined case number column
-            const columns = isPaniteraPengganti
-                ? [
-                      { width: 5 }, // A: No.
-                      { width: 25 }, // B: Nomor Perkara (combined)
-                      { width: 15 }, // C: Putus Tanggal
-                      { width: 15 }, // D: Ikrar Tanggal
-                      { width: 12 }, // E: Ket
-                      { width: 5 }, // F: extra space
-                  ]
-                : [
-                      { width: 5 }, // A: No.
-                      { width: 25 }, // B: Nomor Perkara (combined)
-                      { width: 15 }, // C: Putus Tanggal
-                      { width: 15 }, // D: Tanggal BHT
-                      { width: 15 }, // E: Ikrar Tanggal
-                      { width: 12 }, // F: Ket
-                      { width: 5 }, // G: extra space
-                  ];
-            worksheet.columns = columns;
+            // Column widths - 5 columns: No, Nomor Perkara, Putus Tanggal, Putus Banding/Kasasi, Ket
+            worksheet.columns = [
+                { width: 5 }, // A: No.
+                { width: 25 }, // B: Nomor Perkara
+                { width: 15 }, // C: Putus Tanggal
+                { width: 18 }, // D: Putus Banding/Putus Kasasi
+                { width: 12 }, // E: Ket
+            ];
 
             const thinBorder: Partial<ExcelJS.Borders> = {
                 top: { style: 'thin' },
@@ -409,11 +397,8 @@ export class UpayaHukumService {
                 right: { style: 'thin' },
             };
 
-            // Determine merge range based on column count
-            const mergeRange = isPaniteraPengganti ? 'A1:F1' : 'A1:G1';
-
             // Row 1: Title
-            worksheet.mergeCells(mergeRange);
+            worksheet.mergeCells('A1:E1');
             const titleCell = worksheet.getCell('A1');
             titleCell.value = `BERITA ACARA PENYERAHAN BERKAS PERKARA ${typeLabel}`;
             titleCell.font = { bold: true, size: 14 };
@@ -421,30 +406,27 @@ export class UpayaHukumService {
 
             // Row 2: blank
             // Row 3: Date paragraph
-            const dateMergeRange = isPaniteraPengganti ? 'A3:F3' : 'A3:G3';
-            worksheet.mergeCells(dateMergeRange);
+            worksheet.mergeCells('A3:E3');
             const now = new Date();
             const dateText = `Pada hari ini ${formatIndonesianDay(now)} tanggal ${formatIndonesianDate(now)}, saya yang bertanda tangan di bawah ini :`;
             const dateCell = worksheet.getCell('A3');
             dateCell.value = dateText;
             dateCell.alignment = { wrapText: true };
 
-            // Rows 4-6: Pihak Pertama info - use fetched user name
+            // Rows 4-6: Pihak Pertama info
             worksheet.getCell('B4').value = 'Nama';
             worksheet.getCell('C4').value = `: ${pihakPertama.fullName}`;
             worksheet.getCell('B5').value = 'Jabatan';
-            worksheet.getCell('C5').value = ': Panitera Muda Hukum';
+            worksheet.getCell('C5').value = ': Panitera Muda Gugatan';
             worksheet.getCell('B6').value = 'Unit Kerja';
             worksheet.getCell('C6').value = ': Pengadilan Agama Banjarmasin';
 
             // Row 7: "selanjutnya disebut sebagai Pihak Pertama"
-            const pihak1MergeRange = isPaniteraPengganti ? 'A7:F7' : 'A7:G7';
-            worksheet.mergeCells(pihak1MergeRange);
+            worksheet.mergeCells('A7:E7');
             const pihak1Cell = worksheet.getCell('A7');
             pihak1Cell.value = 'selanjutnya disebut sebagai "Pihak Pertama"';
-            pihak1Cell.font = { bold: false };
 
-            // Rows 8-10: Pihak Kedua info - use fetched user name
+            // Rows 8-10: Pihak Kedua info
             worksheet.getCell('B8').value = 'Nama';
             worksheet.getCell('C8').value = `: ${pihakKedua.fullName}`;
             worksheet.getCell('B9').value = 'Jabatan';
@@ -453,121 +435,64 @@ export class UpayaHukumService {
             worksheet.getCell('C10').value = ': Pengadilan Agama Banjarmasin';
 
             // Row 11: "selanjutnya disebut sebagai Pihak Kedua"
-            const pihak2MergeRange = isPaniteraPengganti
-                ? 'A11:F11'
-                : 'A11:G11';
-            worksheet.mergeCells(pihak2MergeRange);
+            worksheet.mergeCells('A11:E11');
             const pihak2Cell = worksheet.getCell('A11');
             pihak2Cell.value = 'selanjutnya disebut sebagai "Pihak Kedua"';
 
             // Row 12: blank
             // Row 13: Handover paragraph
-            const handoverMergeRange = isPaniteraPengganti
-                ? 'A13:F14'
-                : 'A13:G14';
-            worksheet.mergeCells(handoverMergeRange);
+            worksheet.mergeCells('A13:E14');
             const handoverCell = worksheet.getCell('A13');
             handoverCell.value = `Pihak Pertama menyerahkan berkas perkara kepada pihak Kedua dan Pihak Kedua menyatakan telah menerima dari Pihak Pertama berupa berkas ${typeLabel.toLowerCase()} yang telah berkekuatan hukum tetap, yaitu:`;
             handoverCell.alignment = { wrapText: true, vertical: 'top' };
 
             // Row 16: Table header
             const headerRow = 16;
-            if (isPaniteraPengganti) {
-                // Headers without Tanggal BHT
-                worksheet.getCell(`A${headerRow}`).value = 'No.';
-                worksheet.getCell(`B${headerRow}`).value = 'Nomor Perkara';
-                worksheet.getCell(`C${headerRow}`).value = 'Putus Tanggal';
-                worksheet.getCell(`D${headerRow}`).value = 'Ikrar Tanggal';
-                worksheet.getCell(`E${headerRow}`).value = 'Ket';
+            worksheet.getCell(`A${headerRow}`).value = 'No.';
+            worksheet.getCell(`B${headerRow}`).value = 'Nomor Perkara';
+            worksheet.getCell(`C${headerRow}`).value = 'Putus Tanggal';
+            worksheet.getCell(`D${headerRow}`).value = putusDateLabel;
+            worksheet.getCell(`E${headerRow}`).value = 'Ket';
 
-                // Style header cells
-                ['A', 'B', 'C', 'D', 'E'].forEach((col) => {
-                    const cell = worksheet.getCell(`${col}${headerRow}`);
-                    cell.font = { bold: true };
-                    cell.alignment = {
-                        horizontal: 'center',
-                        vertical: 'middle',
-                    };
-                    cell.border = thinBorder;
-                });
-            } else {
-                // Headers with Tanggal BHT
-                worksheet.getCell(`A${headerRow}`).value = 'No.';
-                worksheet.getCell(`B${headerRow}`).value = 'Nomor Perkara';
-                worksheet.getCell(`C${headerRow}`).value = 'Putus Tanggal';
-                worksheet.getCell(`D${headerRow}`).value = 'Tanggal BHT';
-                worksheet.getCell(`E${headerRow}`).value = 'Ikrar Tanggal';
-                worksheet.getCell(`F${headerRow}`).value = 'Ket';
+            // Style header cells
+            ['A', 'B', 'C', 'D', 'E'].forEach((col) => {
+                const cell = worksheet.getCell(`${col}${headerRow}`);
+                cell.font = { bold: true };
+                cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                cell.border = thinBorder;
+            });
 
-                // Style header cells
-                ['A', 'B', 'C', 'D', 'E', 'F'].forEach((col) => {
-                    const cell = worksheet.getCell(`${col}${headerRow}`);
-                    cell.font = { bold: true };
-                    cell.alignment = {
-                        horizontal: 'center',
-                        vertical: 'middle',
-                    };
-                    cell.border = thinBorder;
-                });
-            }
-
-            // Data rows - combined case number
+            // Data rows
             upayaHukumList.forEach((uh, index) => {
                 const rowNum = headerRow + 1 + index;
 
-                if (isPaniteraPengganti) {
-                    // Without BHT column
-                    worksheet.getCell(`A${rowNum}`).value = index + 1;
-                    worksheet.getCell(`B${rowNum}`).value =
-                        uh.lawsuit.caseNumber;
-                    worksheet.getCell(`C${rowNum}`).value = uh.lawsuit
-                        .decisionDate
-                        ? formatShortDate(uh.lawsuit.decisionDate)
-                        : '';
-                    worksheet.getCell(`D${rowNum}`).value = uh.lawsuit.ikrarDate
-                        ? formatShortDate(uh.lawsuit.ikrarDate)
-                        : '';
-                    worksheet.getCell(`E${rowNum}`).value = '';
+                // Determine putus date based on type
+                const putusDateValue =
+                    type === UpayaHukumType.BANDING
+                        ? uh.putusDateBanding
+                        : uh.putusDateKasasi;
 
-                    // Style data cells
-                    ['A', 'B', 'C', 'D', 'E'].forEach((col) => {
-                        const cell = worksheet.getCell(`${col}${rowNum}`);
-                        cell.border = thinBorder;
-                        cell.alignment = { horizontal: 'center' };
-                    });
-                } else {
-                    // With BHT column
-                    worksheet.getCell(`A${rowNum}`).value = index + 1;
-                    worksheet.getCell(`B${rowNum}`).value =
-                        uh.lawsuit.caseNumber;
-                    worksheet.getCell(`C${rowNum}`).value = uh.lawsuit
-                        .decisionDate
-                        ? formatShortDate(uh.lawsuit.decisionDate)
-                        : '';
-                    worksheet.getCell(`D${rowNum}`).value = uh.lawsuit.bhtDate
-                        ? formatShortDate(uh.lawsuit.bhtDate)
-                        : '';
-                    worksheet.getCell(`E${rowNum}`).value = uh.lawsuit.ikrarDate
-                        ? formatShortDate(uh.lawsuit.ikrarDate)
-                        : '';
-                    worksheet.getCell(`F${rowNum}`).value = '';
+                worksheet.getCell(`A${rowNum}`).value = index + 1;
+                worksheet.getCell(`B${rowNum}`).value = uh.lawsuit.caseNumber;
+                worksheet.getCell(`C${rowNum}`).value = uh.lawsuit.decisionDate
+                    ? formatShortDate(uh.lawsuit.decisionDate)
+                    : '';
+                worksheet.getCell(`D${rowNum}`).value = putusDateValue
+                    ? formatShortDate(putusDateValue)
+                    : '';
+                worksheet.getCell(`E${rowNum}`).value = '';
 
-                    // Style data cells
-                    ['A', 'B', 'C', 'D', 'E', 'F'].forEach((col) => {
-                        const cell = worksheet.getCell(`${col}${rowNum}`);
-                        cell.border = thinBorder;
-                        cell.alignment = { horizontal: 'center' };
-                    });
-                }
+                // Style data cells
+                ['A', 'B', 'C', 'D', 'E'].forEach((col) => {
+                    const cell = worksheet.getCell(`${col}${rowNum}`);
+                    cell.border = thinBorder;
+                    cell.alignment = { horizontal: 'center' };
+                });
             });
 
             // Footer rows
             const footerStart = headerRow + 1 + upayaHukumList.length + 1;
-            const footerMergeRange = isPaniteraPengganti
-                ? `A${footerStart}:F${footerStart + 1}`
-                : `A${footerStart}:G${footerStart + 1}`;
-
-            worksheet.mergeCells(footerMergeRange);
+            worksheet.mergeCells(`A${footerStart}:E${footerStart + 1}`);
             const closingCell = worksheet.getCell(`A${footerStart}`);
             closingCell.value =
                 'Demikian berita acara serah terima berkas perkara ini dibuat oleh kedua belah pihak, agar berkas perkara tersebut dapat diarsipkan.';
@@ -589,23 +514,15 @@ export class UpayaHukumService {
                 horizontal: 'center',
             };
 
-            // Adjust signature column for panitera-pengganti
-            const sigColStart = isPaniteraPengganti ? 'D' : 'E';
-            const sigColEnd = isPaniteraPengganti ? 'E' : 'G';
-            worksheet.mergeCells(
-                `${sigColStart}${sigStart}:${sigColEnd}${sigStart + 1}`,
-            );
-            worksheet.getCell(`${sigColStart}${sigStart}`).value =
-                'Pihak Kedua';
-            worksheet.getCell(`${sigColStart}${sigStart}`).font = {
-                bold: true,
-            };
-            worksheet.getCell(`${sigColStart}${sigStart}`).alignment = {
+            worksheet.mergeCells(`D${sigStart}:E${sigStart + 1}`);
+            worksheet.getCell(`D${sigStart}`).value = 'Pihak Kedua';
+            worksheet.getCell(`D${sigStart}`).font = { bold: true };
+            worksheet.getCell(`D${sigStart}`).alignment = {
                 horizontal: 'center',
                 vertical: 'bottom',
             };
 
-            // Signature names - use fetched user names
+            // Signature names
             const nameRow = sigStart + 5;
 
             worksheet.mergeCells(`A${nameRow}:C${nameRow}`);
@@ -614,12 +531,9 @@ export class UpayaHukumService {
                 horizontal: 'center',
             };
 
-            worksheet.mergeCells(
-                `${sigColStart}${nameRow}:${sigColEnd}${nameRow}`,
-            );
-            worksheet.getCell(`${sigColStart}${nameRow}`).value =
-                pihakKedua.fullName;
-            worksheet.getCell(`${sigColStart}${nameRow}`).alignment = {
+            worksheet.mergeCells(`D${nameRow}:E${nameRow}`);
+            worksheet.getCell(`D${nameRow}`).value = pihakKedua.fullName;
+            worksheet.getCell(`D${nameRow}`).alignment = {
                 horizontal: 'center',
             };
 
