@@ -1,15 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-    Between,
-    FindOptionsWhere,
-    ILike,
-    In,
-    IsNull,
-    LessThanOrEqual,
-    MoreThanOrEqual,
-    Repository,
-} from 'typeorm';
+import { In, Repository } from 'typeorm';
 import {
     LawsuitEntity,
     LawsuitStatus,
@@ -40,124 +31,95 @@ export class LawsuitsRepository {
         const offset =
             metadata.page > 1 ? metadata.limit * (metadata.page - 1) : 0;
 
-        let where:
-            | FindOptionsWhere<LawsuitEntity>[]
-            | FindOptionsWhere<LawsuitEntity> = {};
+        const qb = this.lawsuitsRepository
+            .createQueryBuilder('lawsuit')
+            .leftJoinAndSelect('lawsuit.pp', 'pp')
+            .leftJoinAndSelect('lawsuit.js', 'js')
+            .leftJoinAndSelect('lawsuit.panmudGugatan', 'panmudGugatan')
+            .leftJoinAndSelect('lawsuit.panmudPermohonan', 'panmudPermohonan')
+            .leftJoinAndSelect('lawsuit.panmudHukum', 'panmudHukum')
+            .leftJoinAndSelect(
+                'lawsuit.documentClassification',
+                'documentClassification',
+            )
+            .leftJoin('lawsuit.upayaHukum', 'upayaHukum');
 
+        // Filter lawsuits without upayaHukum (inverse-side relation check)
+        qb.where('upayaHukum.id IS NULL');
+
+        // Apply search filter
         if (metadata.search) {
-            where = [
-                { caseNumber: ILike(`%${metadata.search}%`) },
-                { classification: ILike(`%${metadata.search}%`) },
-            ];
+            qb.andWhere(
+                '(lawsuit.caseNumber ILIKE :search OR lawsuit.classification ILIKE :search)',
+                { search: `%${metadata.search}%` },
+            );
         }
 
         // Apply type filter
         if (metadata.type) {
-            if (Array.isArray(where)) {
-                where = where.map((w) => ({ ...w, type: metadata.type }));
-            } else {
-                where = { ...where, type: metadata.type };
-            }
+            qb.andWhere('lawsuit.type = :type', { type: metadata.type });
         }
 
         // Apply status filter
         if (metadata.status) {
-            if (Array.isArray(where)) {
-                where = where.map((w) => ({ ...w, status: metadata.status }));
-            } else {
-                where = { ...where, status: metadata.status };
-            }
+            qb.andWhere('lawsuit.status = :status', {
+                status: metadata.status,
+            });
         }
 
         // Apply ppId filter
         if (metadata.ppId) {
-            if (Array.isArray(where)) {
-                where = where.map((w) => ({
-                    ...w,
-                    pp: { id: metadata.ppId },
-                }));
-            } else {
-                where = { ...where, pp: { id: metadata.ppId } };
-            }
+            qb.andWhere('pp.id = :ppId', { ppId: metadata.ppId });
         }
 
         // Apply decision date range filter
-        const dateFilter = this.buildDateFilter(
-            metadata.startDate,
-            metadata.endDate,
-        );
-        if (dateFilter) {
-            if (Array.isArray(where)) {
-                where = where.map((w) => ({
-                    ...w,
-                    decisionDate: dateFilter,
-                }));
-            } else {
-                where = { ...where, decisionDate: dateFilter };
-            }
+        if (metadata.startDate && metadata.endDate) {
+            qb.andWhere(
+                'lawsuit.decisionDate BETWEEN :startDate AND :endDate',
+                {
+                    startDate: new Date(metadata.startDate),
+                    endDate: new Date(metadata.endDate),
+                },
+            );
+        } else if (metadata.startDate) {
+            qb.andWhere('lawsuit.decisionDate >= :startDate', {
+                startDate: new Date(metadata.startDate),
+            });
+        } else if (metadata.endDate) {
+            qb.andWhere('lawsuit.decisionDate <= :endDate', {
+                endDate: new Date(metadata.endDate),
+            });
         }
 
         // Apply BHT date range filter
-        const bhtDateFilter = this.buildDateFilter(
-            metadata.bhtStartDate,
-            metadata.bhtEndDate,
+        if (metadata.bhtStartDate && metadata.bhtEndDate) {
+            qb.andWhere(
+                'lawsuit.bhtDate BETWEEN :bhtStartDate AND :bhtEndDate',
+                {
+                    bhtStartDate: new Date(metadata.bhtStartDate),
+                    bhtEndDate: new Date(metadata.bhtEndDate),
+                },
+            );
+        } else if (metadata.bhtStartDate) {
+            qb.andWhere('lawsuit.bhtDate >= :bhtStartDate', {
+                bhtStartDate: new Date(metadata.bhtStartDate),
+            });
+        } else if (metadata.bhtEndDate) {
+            qb.andWhere('lawsuit.bhtDate <= :bhtEndDate', {
+                bhtEndDate: new Date(metadata.bhtEndDate),
+            });
+        }
+
+        // Apply sorting
+        qb.orderBy(
+            `lawsuit.${metadata.sortBy}`,
+            metadata.sortType.toUpperCase() as 'ASC' | 'DESC',
         );
-        if (bhtDateFilter) {
-            if (Array.isArray(where)) {
-                where = where.map((w) => ({
-                    ...w,
-                    bhtDate: bhtDateFilter,
-                }));
-            } else {
-                where = { ...where, bhtDate: bhtDateFilter };
-            }
-        }
 
-        // Exclude lawsuits that already have upayaHukum (Banding/Kasasi)
-        // This prevents documents in Upaya Hukum from appearing in Gugatan/Permohonan lists
-        if (Array.isArray(where)) {
-            where = where.map((w) => ({
-                ...w,
-                upayaHukum: IsNull(),
-            }));
-        } else {
-            where = { ...where, upayaHukum: IsNull() };
-        }
+        // Apply pagination
+        qb.skip(offset).take(metadata.limit);
 
-        const queryOptions = {
-            skip: offset,
-            take: metadata.limit,
-            where,
-            order: {
-                [metadata.sortBy]: metadata.sortType.toUpperCase() as
-                    | 'ASC'
-                    | 'DESC',
-            },
-            relations: [
-                'pp',
-                'js',
-                'panmudGugatan',
-                'panmudPermohonan',
-                'panmudHukum',
-                'documentClassification',
-                'upayaHukum',
-            ],
-        };
-
-        return this.lawsuitsRepository.findAndCount(queryOptions);
-    }
-
-    private buildDateFilter(startDate?: string, endDate?: string) {
-        if (startDate && endDate) {
-            return Between(new Date(startDate), new Date(endDate));
-        }
-        if (startDate) {
-            return MoreThanOrEqual(new Date(startDate));
-        }
-        if (endDate) {
-            return LessThanOrEqual(new Date(endDate));
-        }
-        return null;
+        return qb.getManyAndCount();
     }
 
     findById(id: string) {
