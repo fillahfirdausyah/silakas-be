@@ -100,7 +100,7 @@ export class UpayaHukumRepository {
             .where('upayaHukum.deletedAt IS NOT NULL');
 
         if (metadata.search) {
-            qb.andWhere('(lawsuit.caseNumber ILIKE :search)', {
+            qb.andWhere('(LOWER(lawsuit.caseNumber) LIKE LOWER(:search))', {
                 search: `%${metadata.search}%`,
             });
         }
