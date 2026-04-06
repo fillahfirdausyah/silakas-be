@@ -44,6 +44,7 @@ export class UpayaHukumService {
                 id: uh.id,
                 lawsuitId: uh.lawsuitId,
                 lawsuitCaseNumber: uh.lawsuit.caseNumber,
+                lawsuitStatus: uh.lawsuit.status,
                 type: uh.type,
                 tanggalDaftar: uh.tanggalDaftar,
                 tanggalDaftarBanding: uh.tanggalDaftarBanding,

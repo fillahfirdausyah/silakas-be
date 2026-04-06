@@ -25,8 +25,13 @@ export class DashboardRepository {
     ) {
         const qb = this.lawsuitRepo.createQueryBuilder('l');
 
-        // Role-based filtering: Panitera Pengganti only sees their own data
-        if (roles?.includes('panitera-pengganti') && userId) {
+        // Role-based filtering: Single-role Panitera Pengganti only sees their own data
+        // Multi-role users with PP + other roles can view all data
+        if (
+            roles?.length === 1 &&
+            roles.includes('panitera-pengganti') &&
+            userId
+        ) {
             qb.andWhere('l.pp_id = :userId', { userId });
         }
 
@@ -130,8 +135,13 @@ export class DashboardRepository {
             )
             .where('l.classification IS NOT NULL');
 
-        // Role-based filtering: Panitera Pengganti only sees their own data
-        if (roles?.includes('panitera-pengganti') && userId) {
+        // Role-based filtering: Single-role Panitera Pengganti only sees their own data
+        // Multi-role users with PP + other roles can view all data
+        if (
+            roles?.length === 1 &&
+            roles.includes('panitera-pengganti') &&
+            userId
+        ) {
             qb.andWhere('l.pp_id = :userId', { userId });
         }
 
@@ -163,8 +173,13 @@ export class DashboardRepository {
             )
             .where('YEAR(l.created_at) = :year', { year });
 
-        // Role-based filtering: Panitera Pengganti only sees their own data
-        if (roles?.includes('panitera-pengganti') && userId) {
+        // Role-based filtering: Single-role Panitera Pengganti only sees their own data
+        // Multi-role users with PP + other roles can view all data
+        if (
+            roles?.length === 1 &&
+            roles.includes('panitera-pengganti') &&
+            userId
+        ) {
             qb.andWhere('l.pp_id = :userId', { userId });
         }
 
@@ -182,8 +197,13 @@ export class DashboardRepository {
     ): Promise<number> {
         const qb = this.lawsuitRepo.createQueryBuilder('l');
 
-        // Role-based filtering: Panitera Pengganti only sees their own data
-        if (roles?.includes('panitera-pengganti') && userId) {
+        // Role-based filtering: Single-role Panitera Pengganti only sees their own data
+        // Multi-role users with PP + other roles can view all data
+        if (
+            roles?.length === 1 &&
+            roles.includes('panitera-pengganti') &&
+            userId
+        ) {
             qb.andWhere('l.pp_id = :userId', { userId });
         }
 
@@ -215,8 +235,13 @@ export class DashboardRepository {
             .createQueryBuilder('l')
             .where('l.status IN (:...statuses)', { statuses });
 
-        // Role-based filtering: Panitera Pengganti only sees their own data
-        if (roles?.includes('panitera-pengganti') && userId) {
+        // Role-based filtering: Single-role Panitera Pengganti only sees their own data
+        // Multi-role users with PP + other roles can view all data
+        if (
+            roles?.length === 1 &&
+            roles.includes('panitera-pengganti') &&
+            userId
+        ) {
             qb.andWhere('l.pp_id = :userId', { userId });
         }
 
@@ -243,8 +268,13 @@ export class DashboardRepository {
                 statuses: excludeStatuses,
             });
 
-        // Role-based filtering: Panitera Pengganti only sees their own data
-        if (roles?.includes('panitera-pengganti') && userId) {
+        // Role-based filtering: Single-role Panitera Pengganti only sees their own data
+        // Multi-role users with PP + other roles can view all data
+        if (
+            roles?.length === 1 &&
+            roles.includes('panitera-pengganti') &&
+            userId
+        ) {
             qb.andWhere('l.pp_id = :userId', { userId });
         }
 
