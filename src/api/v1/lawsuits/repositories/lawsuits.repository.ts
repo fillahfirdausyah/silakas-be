@@ -72,41 +72,41 @@ export class LawsuitsRepository {
             qb.andWhere('pp.id = :ppId', { ppId: metadata.ppId });
         }
 
-        // Apply decision date range filter
+        // Apply decision date range filter (DATE column - use string comparison to avoid timezone issues)
         if (metadata.startDate && metadata.endDate) {
             qb.andWhere(
-                'lawsuit.decisionDate BETWEEN :startDate AND :endDate',
+                'DATE(lawsuit.decisionDate) BETWEEN :startDate AND :endDate',
                 {
-                    startDate: new Date(metadata.startDate),
-                    endDate: new Date(metadata.endDate),
+                    startDate: metadata.startDate,
+                    endDate: metadata.endDate,
                 },
             );
         } else if (metadata.startDate) {
-            qb.andWhere('lawsuit.decisionDate >= :startDate', {
-                startDate: new Date(metadata.startDate),
+            qb.andWhere('DATE(lawsuit.decisionDate) >= :startDate', {
+                startDate: metadata.startDate,
             });
         } else if (metadata.endDate) {
-            qb.andWhere('lawsuit.decisionDate <= :endDate', {
-                endDate: new Date(metadata.endDate),
+            qb.andWhere('DATE(lawsuit.decisionDate) <= :endDate', {
+                endDate: metadata.endDate,
             });
         }
 
-        // Apply BHT date range filter
+        // Apply BHT date range filter (DATE column - use string comparison to avoid timezone issues)
         if (metadata.bhtStartDate && metadata.bhtEndDate) {
             qb.andWhere(
-                'lawsuit.bhtDate BETWEEN :bhtStartDate AND :bhtEndDate',
+                'DATE(lawsuit.bhtDate) BETWEEN :bhtStartDate AND :bhtEndDate',
                 {
-                    bhtStartDate: new Date(metadata.bhtStartDate),
-                    bhtEndDate: new Date(metadata.bhtEndDate),
+                    bhtStartDate: metadata.bhtStartDate,
+                    bhtEndDate: metadata.bhtEndDate,
                 },
             );
         } else if (metadata.bhtStartDate) {
-            qb.andWhere('lawsuit.bhtDate >= :bhtStartDate', {
-                bhtStartDate: new Date(metadata.bhtStartDate),
+            qb.andWhere('DATE(lawsuit.bhtDate) >= :bhtStartDate', {
+                bhtStartDate: metadata.bhtStartDate,
             });
         } else if (metadata.bhtEndDate) {
-            qb.andWhere('lawsuit.bhtDate <= :bhtEndDate', {
-                bhtEndDate: new Date(metadata.bhtEndDate),
+            qb.andWhere('DATE(lawsuit.bhtDate) <= :bhtEndDate', {
+                bhtEndDate: metadata.bhtEndDate,
             });
         }
 
