@@ -1063,6 +1063,30 @@ export class LawsuitsService {
 
         return { steps, currentStep };
     }
+
+    public async softDelete(id: string) {
+        try {
+            const lawsuit = await this.lawsuitsRepository.findById(id);
+            if (!lawsuit) {
+                throw new NotFoundException('Berkas tidak ditemukan');
+            }
+
+            await this.lawsuitsRepository.softDelete(id);
+
+            return {
+                payload: {
+                    id,
+                    caseNumber: lawsuit.caseNumber,
+                    deletedAt: new Date(),
+                },
+            };
+        } catch (error) {
+            this.logger.error(
+                error instanceof Error ? error.stack || error.message : error,
+            );
+            handleServiceError(error);
+        }
+    }
 }
 
 const INDONESIAN_DAYS = [

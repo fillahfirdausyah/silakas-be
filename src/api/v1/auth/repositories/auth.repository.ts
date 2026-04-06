@@ -61,7 +61,7 @@ export class AuthRepository {
                 tokenHash: Equal(tokenHash),
                 revokedAt: IsNull(),
             },
-            relations: ['user', 'user.role'],
+            relations: ['user', 'user.roles'],
         });
     }
 
@@ -91,10 +91,10 @@ export class AuthRepository {
         });
     }
 
-    async findUserWithRole(id: string) {
+    async findUserWithRoles(id: string) {
         return this.repository.findOne({
             where: { id },
-            relations: ['role'],
+            relations: ['roles'],
         });
     }
 }

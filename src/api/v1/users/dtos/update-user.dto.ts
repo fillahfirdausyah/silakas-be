@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+    IsArray,
     IsEmail,
     IsNotEmpty,
     IsOptional,
@@ -30,8 +31,9 @@ export class UpdateUserDto {
     @MinLength(6, { message: 'Password must be at least 6 characters' })
     password?: string;
 
-    @ApiPropertyOptional({ format: 'uuid' })
+    @ApiPropertyOptional({ type: [String], format: 'uuid' })
     @IsOptional()
-    @IsUUID('4', { message: 'Role id must be UUID' })
-    roleId?: string;
+    @IsArray({ message: 'Role ids must be an array' })
+    @IsUUID('4', { each: true, message: 'Each role id must be a valid UUID' })
+    roleIds?: string[];
 }

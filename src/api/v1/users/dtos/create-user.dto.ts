@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+    IsArray,
     IsEmail,
     IsNotEmpty,
     IsString,
@@ -22,7 +23,9 @@ export class CreateUserDto {
     @MinLength(6, { message: 'Password must be at least 6 characters' })
     password: string;
 
-    @ApiProperty({ required: true, format: 'uuid' })
-    @IsUUID('4', { message: 'Role id must be UUID' })
-    roleId: string;
+    @ApiProperty({ required: true, type: [String], format: 'uuid' })
+    @IsArray({ message: 'Role ids must be an array' })
+    @IsUUID('4', { each: true, message: 'Each role id must be a valid UUID' })
+    @IsNotEmpty({ message: 'At least one role is required' })
+    roleIds: string[];
 }

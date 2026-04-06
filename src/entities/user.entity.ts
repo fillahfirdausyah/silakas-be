@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import { Column, Entity, JoinTable, ManyToMany, OneToMany } from 'typeorm';
 import { BaseEntity } from './base.entity';
 
 import { RoleEntity } from './role.entity';
@@ -30,9 +30,13 @@ export class UserEntity extends BaseEntity {
     })
     password: string;
 
-    @ManyToOne(() => RoleEntity, (role) => role.users)
-    @JoinColumn({ name: 'role_id' })
-    role: RoleEntity;
+    @ManyToMany(() => RoleEntity, (role) => role.users)
+    @JoinTable({
+        name: 'user_roles',
+        joinColumn: { name: 'user_id', referencedColumnName: 'id' },
+        inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
+    })
+    roles: RoleEntity[];
 
     @OneToMany(() => DocumentEntity, (document) => document.pp)
     ppDocuments: DocumentEntity[];

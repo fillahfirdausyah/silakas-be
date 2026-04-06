@@ -67,7 +67,7 @@ export class AuthService {
     }) {
         try {
             const user = await this.authRepository.findByEmail(payload.email, [
-                'role',
+                'roles',
             ]);
 
             if (!user) {
@@ -83,12 +83,14 @@ export class AuthService {
                 throw new UnauthorizedException('Kredensial tidak valid.');
             }
 
+            const roleSlugs = user.roles?.map((r) => r.slug) ?? [];
+
             const tokens = await this.generateTokens(
                 {
                     id: user.id,
                     name: user.fullName,
                     email: user.email,
-                    role: user.role.slug,
+                    roles: roleSlugs,
                 },
                 payload.rememberMe ?? false,
             );
@@ -118,7 +120,7 @@ export class AuthService {
                         id: user.id,
                         email: user.email,
                         fullName: user.fullName,
-                        authority: [user.role.slug],
+                        authority: roleSlugs,
                     },
                     accessToken: tokens.accessToken,
                     refreshToken: tokens.refreshToken,
@@ -154,12 +156,13 @@ export class AuthService {
             await this.authRepository.revokeRefreshToken(tokenHash);
 
             // Generate new tokens - preserve the rememberMe preference by using long expiration
+            const roleSlugs = storedToken.user.roles?.map((r) => r.slug) ?? [];
             const newTokens = await this.generateTokens(
                 {
                     id: storedToken.user.id,
                     name: storedToken.user.fullName,
                     email: storedToken.user.email,
-                    role: storedToken.user.role.slug,
+                    roles: roleSlugs,
                 },
                 true, // Use long expiration for refreshed tokens
             );
@@ -257,8 +260,8 @@ export class AuthService {
             id: string;
             email: string;
             name: string;
-            role: string;
-            originalRole?: string;
+            roles: string[];
+            originalRoles?: string[];
             isImpersonating?: boolean;
         },
         rememberMe: boolean,
@@ -268,19 +271,19 @@ export class AuthService {
                 id: string;
                 email: string;
                 name: string;
-                role: string;
-                originalRole?: string;
+                roles: string[];
+                originalRoles?: string[];
                 isImpersonating?: boolean;
             } = {
                 id: user.id,
                 email: user.email,
                 name: user.name,
-                role: user.role,
+                roles: user.roles,
             };
 
             // Add impersonation data if present
-            if (user.isImpersonating && user.originalRole) {
-                jwtPayload.originalRole = user.originalRole;
+            if (user.isImpersonating && user.originalRoles) {
+                jwtPayload.originalRoles = user.originalRoles;
                 jwtPayload.isImpersonating = true;
             }
 
@@ -327,8 +330,8 @@ export class AuthService {
         deviceInfo?: string;
     }) {
         try {
-            // Get the user with their current role
-            const user = await this.authRepository.findUserWithRole(
+            // Get the user with their current roles
+            const user = await this.authRepository.findUserWithRoles(
                 payload.userId,
             );
 
@@ -336,8 +339,9 @@ export class AuthService {
                 throw new UnauthorizedException('User tidak ditemukan.');
             }
 
-            // Verify user is super-admin
-            if (user.role.slug !== 'super-admin') {
+            // Verify user has super-admin role
+            const userRoleSlugs = user.roles?.map((r) => r.slug) ?? [];
+            if (!userRoleSlugs.includes('super-admin')) {
                 throw new UnauthorizedException(
                     'Hanya super admin yang dapat melakukan impersonasi.',
                 );
@@ -365,8 +369,8 @@ export class AuthService {
                     id: user.id,
                     email: user.email,
                     name: user.fullName,
-                    role: targetRole.slug, // The impersonated role
-                    originalRole: user.role.slug, // Store original role
+                    roles: [targetRole.slug], // The impersonated role
+                    originalRoles: userRoleSlugs, // Store original roles
                     isImpersonating: true,
                 },
                 true, // Use long expiration for impersonation sessions
@@ -393,7 +397,7 @@ export class AuthService {
             // Log the impersonation event
             await this.auditService.logImpersonationStart({
                 userId: user.id,
-                originalRole: user.role.slug,
+                originalRole: userRoleSlugs.join(','),
                 impersonatedRole: targetRole.slug,
                 ipAddress: payload.ipAddress,
                 deviceInfo: payload.deviceInfo,
@@ -406,12 +410,12 @@ export class AuthService {
                         email: user.email,
                         fullName: user.fullName,
                         authority: [targetRole.slug],
-                        originalAuthority: [user.role.slug],
+                        originalAuthority: userRoleSlugs,
                         isImpersonating: true,
                     },
                     accessToken: tokens.accessToken,
                     refreshToken: tokens.refreshToken,
-                    originalRole: user.role.slug,
+                    originalRoles: userRoleSlugs,
                     impersonatedRole: targetRole.slug,
                 },
             };
@@ -432,8 +436,8 @@ export class AuthService {
             const tokenHash = this.hashToken(payload.refreshToken);
             await this.authRepository.revokeRefreshToken(tokenHash);
 
-            // Get the user with their original role
-            const user = await this.authRepository.findUserWithRole(
+            // Get the user with their original roles
+            const user = await this.authRepository.findUserWithRoles(
                 payload.userId,
             );
 
@@ -441,13 +445,15 @@ export class AuthService {
                 throw new UnauthorizedException('User tidak ditemukan.');
             }
 
-            // Generate new tokens with original role
+            const roleSlugs = user.roles?.map((r) => r.slug) ?? [];
+
+            // Generate new tokens with original roles
             const tokens = await this.generateTokens(
                 {
                     id: user.id,
                     email: user.email,
                     name: user.fullName,
-                    role: user.role.slug,
+                    roles: roleSlugs,
                 },
                 true,
             );
@@ -470,7 +476,7 @@ export class AuthService {
             // Log the stop impersonation event
             await this.auditService.logImpersonationStop({
                 userId: user.id,
-                originalRole: user.role.slug,
+                originalRole: roleSlugs.join(','),
                 ipAddress: payload.ipAddress,
                 deviceInfo: payload.deviceInfo,
             });
@@ -481,13 +487,13 @@ export class AuthService {
                         id: user.id,
                         email: user.email,
                         fullName: user.fullName,
-                        authority: [user.role.slug],
+                        authority: roleSlugs,
                         isImpersonating: false,
                     },
                     accessToken: tokens.accessToken,
                     refreshToken: tokens.refreshToken,
-                    originalRole: user.role.slug,
-                    impersonatedRole: user.role.slug,
+                    originalRoles: roleSlugs,
+                    impersonatedRole: roleSlugs[0] ?? null,
                 },
             };
         } catch (error) {

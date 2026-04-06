@@ -1,4 +1,5 @@
 import {
+    BadRequestException,
     ConflictException,
     Injectable,
     Logger,
@@ -67,17 +68,31 @@ export class UsersService {
 
     public async createUser(payload: CreateUserDto) {
         try {
-            const [existingUser, role] = await Promise.all([
-                this.usersRepository.findByEmail(payload.email),
-                this.usersRepository.findRoleById(payload.roleId),
-            ]);
+            const existingUser = await this.usersRepository.findByEmail(
+                payload.email,
+            );
 
             if (existingUser) {
                 throw new ConflictException('Email sudah digunakan');
             }
 
-            if (!role) {
-                throw new NotFoundException('Role tidak ditemukan');
+            // Validate roles exist
+            const roles = await this.usersRepository.findRolesByIds(
+                payload.roleIds,
+            );
+
+            if (roles.length !== payload.roleIds.length) {
+                throw new NotFoundException('Beberapa role tidak ditemukan');
+            }
+
+            // Validate super-admin constraint
+            const hasSuperAdmin = roles.some(
+                (role) => role.slug === 'super-admin',
+            );
+            if (hasSuperAdmin && roles.length > 1) {
+                throw new BadRequestException(
+                    'Super admin hanya dapat memiliki satu role',
+                );
             }
 
             const salt = await bcrypt.genSalt(10);
@@ -87,7 +102,7 @@ export class UsersService {
                 email: payload.email,
                 fullName: payload.fullName,
                 password: hashedPassword,
-                role,
+                roles,
             });
 
             return {
@@ -120,14 +135,28 @@ export class UsersService {
                 user.fullName = payload.fullName;
             }
 
-            if (payload.roleId) {
-                const role = await this.usersRepository.findRoleById(
-                    payload.roleId,
+            if (payload.roleIds && payload.roleIds.length > 0) {
+                const roles = await this.usersRepository.findRolesByIds(
+                    payload.roleIds,
                 );
-                if (!role) {
-                    throw new NotFoundException('Role tidak ditemukan');
+
+                if (roles.length !== payload.roleIds.length) {
+                    throw new NotFoundException(
+                        'Beberapa role tidak ditemukan',
+                    );
                 }
-                user.role = role;
+
+                // Validate super-admin constraint
+                const hasSuperAdmin = roles.some(
+                    (role) => role.slug === 'super-admin',
+                );
+                if (hasSuperAdmin && roles.length > 1) {
+                    throw new BadRequestException(
+                        'Super admin hanya dapat memiliki satu role',
+                    );
+                }
+
+                user.roles = roles;
             }
 
             if (payload.password) {
@@ -175,13 +204,12 @@ export class UsersService {
             id: user.id,
             fullName: user.fullName,
             email: user.email,
-            role: user.role
-                ? {
-                      id: user.role.id,
-                      name: user.role.name,
-                      slug: user.role.slug,
-                  }
-                : null,
+            roles:
+                user.roles?.map((role) => ({
+                    id: role.id,
+                    name: role.name,
+                    slug: role.slug,
+                })) ?? [],
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
         };

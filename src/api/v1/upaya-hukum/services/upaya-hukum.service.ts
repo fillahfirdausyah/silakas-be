@@ -676,6 +676,30 @@ export class UpayaHukumService {
             errors: errors.length > 0 ? errors : undefined,
         };
     }
+
+    async softDelete(id: string) {
+        try {
+            const upayaHukum = await this.upayaHukumRepository.findById(id);
+            if (!upayaHukum) {
+                throw new NotFoundException('Upaya Hukum tidak ditemukan');
+            }
+
+            await this.upayaHukumRepository.softDelete(id);
+
+            return {
+                payload: {
+                    id,
+                    lawsuitCaseNumber: upayaHukum.lawsuit.caseNumber,
+                    deletedAt: new Date(),
+                },
+            };
+        } catch (error) {
+            this.logger.error(
+                error instanceof Error ? error.stack || error.message : error,
+            );
+            handleServiceError(error);
+        }
+    }
 }
 
 const INDONESIAN_DAYS = [

@@ -164,4 +164,61 @@ export class LawsuitsRepository {
     save(lawsuit: LawsuitEntity) {
         return this.lawsuitsRepository.save(lawsuit);
     }
+
+    softDelete(id: string) {
+        return this.lawsuitsRepository.softDelete(id);
+    }
+
+    restore(id: string) {
+        return this.lawsuitsRepository.restore(id);
+    }
+
+    hardDelete(id: string) {
+        return this.lawsuitsRepository.delete(id);
+    }
+
+    findDeletedItems(metadata: {
+        page: number;
+        limit: number;
+        search: string;
+        sortBy: string;
+        sortType: string;
+    }) {
+        const offset =
+            metadata.page > 1 ? metadata.limit * (metadata.page - 1) : 0;
+
+        const qb = this.lawsuitsRepository
+            .createQueryBuilder('lawsuit')
+            .withDeleted()
+            .leftJoinAndSelect('lawsuit.pp', 'pp')
+            .leftJoinAndSelect(
+                'lawsuit.documentClassification',
+                'documentClassification',
+            )
+            .where('lawsuit.deletedAt IS NOT NULL');
+
+        if (metadata.search) {
+            qb.andWhere(
+                '(lawsuit.caseNumber ILIKE :search OR lawsuit.classification ILIKE :search)',
+                { search: `%${metadata.search}%` },
+            );
+        }
+
+        qb.orderBy(
+            `lawsuit.${metadata.sortBy}`,
+            metadata.sortType.toUpperCase() as 'ASC' | 'DESC',
+        );
+
+        qb.skip(offset).take(metadata.limit);
+
+        return qb.getManyAndCount();
+    }
+
+    findDeletedById(id: string) {
+        return this.lawsuitsRepository.findOne({
+            where: { id },
+            withDeleted: true,
+            relations: ['pp', 'documentClassification'],
+        });
+    }
 }

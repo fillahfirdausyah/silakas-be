@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, ILike } from 'typeorm';
+import { Repository, FindOptionsWhere, ILike, In } from 'typeorm';
 
 import { RoleEntity } from '../../../../entities/role.entity';
 import { UserEntity } from '../../../../entities/user.entity';
@@ -37,11 +37,11 @@ export class UsersRepository {
             where = [baseWhere];
         }
 
-        // Apply role filter
+        // Apply role filter using many-to-many relation
         if (metadata.roleId) {
             where = where.map((w) => ({
                 ...w,
-                role: { id: metadata.roleId },
+                roles: { id: metadata.roleId },
             }));
         }
 
@@ -52,7 +52,7 @@ export class UsersRepository {
             order: {
                 [metadata.sortBy || 'createdAt']: metadata.sortType,
             },
-            relations: ['role'],
+            relations: ['roles'],
         };
 
         return this.usersRepository.findAndCount(queryOptions);
@@ -67,7 +67,7 @@ export class UsersRepository {
     findById(id: string) {
         return this.usersRepository.findOne({
             where: { id },
-            relations: ['role'],
+            relations: ['roles'],
         });
     }
 
@@ -86,6 +86,12 @@ export class UsersRepository {
         });
     }
 
+    findRolesByIds(ids: string[]) {
+        return this.rolesRepository.find({
+            where: { id: In(ids) },
+        });
+    }
+
     findAllRoles() {
         return this.rolesRepository.find();
     }
@@ -93,9 +99,9 @@ export class UsersRepository {
     findByRoleSlug(slug: string) {
         return this.usersRepository.find({
             where: {
-                role: { slug },
+                roles: { slug },
             },
-            relations: ['role'],
+            relations: ['roles'],
             order: {
                 fullName: 'ASC',
             },

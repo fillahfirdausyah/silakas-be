@@ -1,6 +1,7 @@
 import {
     Body,
     Controller,
+    Delete,
     Get,
     Param,
     Patch,
@@ -194,6 +195,16 @@ export class LawsuitsController {
         const result = await this.lawsuitsService.updateDetails(id, body);
         return {
             message: 'Berkas berhasil diperbarui',
+            payload: result.payload,
+        };
+    }
+
+    @Delete(':id')
+    @Roles('super-admin')
+    async remove(@Param('id') id: string) {
+        const result = await this.lawsuitsService.softDelete(id);
+        return {
+            message: 'Berkas berhasil dihapus',
             payload: result.payload,
         };
     }

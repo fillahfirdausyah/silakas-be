@@ -1,6 +1,7 @@
 import {
     Body,
     Controller,
+    Delete,
     Get,
     Param,
     Patch,
@@ -139,6 +140,16 @@ export class UpayaHukumController {
             message: 'Bulk penerimaan oleh Panmud Hukum berhasil',
             payload: result.payload,
             errors: result.errors,
+        };
+    }
+
+    @Delete(':id')
+    @Roles('super-admin')
+    async remove(@Param('id') id: string) {
+        const result = await this.upayaHukumService.softDelete(id);
+        return {
+            message: 'Upaya Hukum berhasil dihapus',
+            payload: result.payload,
         };
     }
 }

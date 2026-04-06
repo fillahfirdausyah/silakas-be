@@ -46,8 +46,8 @@ export class AuthGuard implements CanActivate {
             });
 
             request['userId'] = payload.id;
-            request['role'] = payload.role;
-            request['originalRole'] = payload.originalRole;
+            request['roles'] = payload.roles;
+            request['originalRoles'] = payload.originalRoles;
             request['isImpersonating'] = payload.isImpersonating;
         } catch (error) {
             this.logger.error(`JWT verification failed: ${error}`);
@@ -75,16 +75,18 @@ export class AuthGuard implements CanActivate {
             }
         }
 
-        // Use originalRole for authorization if impersonating, otherwise use current role
-        const effectiveRole =
-            request['isImpersonating'] && request['originalRole']
-                ? request['originalRole']
-                : request['role'];
+        // Use originalRoles for authorization if impersonating, otherwise use current roles
+        const effectiveRoles =
+            request['isImpersonating'] && request['originalRoles']
+                ? request['originalRoles']
+                : (request['roles'] ?? []);
 
+        // Check if any of the user's roles matches the required roles
+        // Super-admin always has access
         if (
             requiredRoles.length > 0 &&
-            !requiredRoles.includes(effectiveRole) &&
-            effectiveRole !== 'super-admin'
+            !effectiveRoles.some((role) => requiredRoles.includes(role)) &&
+            !effectiveRoles.includes('super-admin')
         ) {
             throw new HttpException(
                 {
