@@ -66,7 +66,7 @@ export class UpayaHukumService {
 
             return { payload };
         } catch (error) {
-            this.logger.error(error.stack || error);
+            this.logger.error(error);
             handleServiceError(error);
         }
     }
@@ -117,7 +117,7 @@ export class UpayaHukumService {
 
             return { payload: upayaHukum };
         } catch (error) {
-            this.logger.error(error.stack || error);
+            this.logger.error(error);
             handleServiceError(error);
         }
     }
@@ -215,7 +215,7 @@ export class UpayaHukumService {
 
             return { payload: upayaHukum };
         } catch (error) {
-            this.logger.error(error.stack || error);
+            this.logger.error(error);
             handleServiceError(error);
         }
     }
@@ -330,7 +330,7 @@ export class UpayaHukumService {
 
             return { payload: upayaHukum };
         } catch (error) {
-            this.logger.error(error.stack || error);
+            this.logger.error(error);
             handleServiceError(error);
         }
     }
@@ -401,7 +401,7 @@ export class UpayaHukumService {
             // Row 1: Title
             worksheet.mergeCells('A1:E1');
             const titleCell = worksheet.getCell('A1');
-            titleCell.value = `BERITA ACARA PENYERAHAN BERKAS PERKARA ${typeLabel}`;
+            titleCell.value = `BERITA ACARA PENYERAHAN BERKAS PERKARA GUGATAN`;
             titleCell.font = { bold: true, size: 14 };
             titleCell.alignment = { horizontal: 'center' };
 
@@ -481,7 +481,8 @@ export class UpayaHukumService {
                 worksheet.getCell(`D${rowNum}`).value = putusDateValue
                     ? formatShortDate(putusDateValue)
                     : '';
-                worksheet.getCell(`E${rowNum}`).value = '';
+                worksheet.getCell(`E${rowNum}`).value =
+                    type === UpayaHukumType.BANDING ? 'BANDING' : 'KASASI';
 
                 // Style data cells
                 ['A', 'B', 'C', 'D', 'E'].forEach((col) => {
@@ -541,7 +542,7 @@ export class UpayaHukumService {
             const buffer = await workbook.xlsx.writeBuffer();
             return { payload: buffer };
         } catch (error) {
-            this.logger.error(error.stack || error);
+            this.logger.error(error);
             handleServiceError(error);
         }
     }
@@ -695,9 +696,7 @@ export class UpayaHukumService {
                 },
             };
         } catch (error) {
-            this.logger.error(
-                error instanceof Error ? error.stack || error.message : error,
-            );
+            this.logger.error(error instanceof Error ? error.message : error);
             handleServiceError(error);
         }
     }

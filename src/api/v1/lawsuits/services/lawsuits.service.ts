@@ -712,6 +712,28 @@ export class LawsuitsService {
             const typeLabel =
                 dto.type === LawsuitType.PERMOHONAN ? 'PERMOHONAN' : 'GUGATAN';
 
+            // Role to jabatan mapping
+            const ROLE_JABATAN_MAPPING: Record<string, string> = {
+                'panitera-pengganti': 'Panitera Pengganti',
+                'panmud-gugatan': 'Panitera Muda Gugatan',
+                'panmud-permohonan': 'Panitera Muda Permohonan',
+                'panmud-hukum': 'Panitera Muda Hukum',
+            };
+
+            // Determine roles for pihak pertama and pihak kedua
+            const pihakPertamaRole = isPaniteraPengganti
+                ? 'panitera-pengganti'
+                : dto.type === LawsuitType.PERMOHONAN
+                  ? 'panmud-permohonan'
+                  : 'panmud-gugatan';
+            // When panitera-pengganti downloads, pihak kedua is the receiving panmud
+            // When panmud downloads, pihak kedua is panmud-hukum
+            const pihakKeduaRole = isPaniteraPengganti
+                ? dto.type === LawsuitType.PERMOHONAN
+                    ? 'panmud-permohonan'
+                    : 'panmud-gugatan'
+                : 'panmud-hukum';
+
             const workbook = new ExcelJS.Workbook();
             const worksheet = workbook.addWorksheet('Berita Acara');
 
@@ -767,7 +789,8 @@ export class LawsuitsService {
             worksheet.getCell('B4').value = 'Nama';
             worksheet.getCell('C4').value = `: ${pihakPertama.fullName}`;
             worksheet.getCell('B5').value = 'Jabatan';
-            worksheet.getCell('C5').value = ': Panitera Muda Gugatan';
+            worksheet.getCell('C5').value =
+                `: ${ROLE_JABATAN_MAPPING[pihakPertamaRole]}`;
             worksheet.getCell('B6').value = 'Unit Kerja';
             worksheet.getCell('C6').value = ': Pengadilan Agama Banjarmasin';
 
@@ -782,7 +805,8 @@ export class LawsuitsService {
             worksheet.getCell('B8').value = 'Nama';
             worksheet.getCell('C8').value = `: ${pihakKedua.fullName}`;
             worksheet.getCell('B9').value = 'Jabatan';
-            worksheet.getCell('C9').value = ': Panitera Muda Hukum';
+            worksheet.getCell('C9').value =
+                `: ${ROLE_JABATAN_MAPPING[pihakKeduaRole]}`;
             worksheet.getCell('B10').value = 'Unit Kerja';
             worksheet.getCell('C10').value = ': Pengadilan Agama Banjarmasin';
 
