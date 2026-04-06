@@ -22,8 +22,9 @@ export enum LawsuitType {
 export class CreateLawsuitDto {
     @IsString()
     @IsNotEmpty()
-    @Matches(/^\d+\/Pdt\.G\/\d{4}\/PA\.Bjm$/, {
-        message: 'Case number must follow the format xxx/Pdt.G/yyyy/PA.Bjm',
+    @Matches(/^\d+\/Pdt\.(G|P)\/\d{4}\/PA\.Bjm$/, {
+        message:
+            'Case number must follow the format xxx/Pdt.G/yyyy/PA.Bjm or xxx/Pdt.P/yyyy/PA.Bjm',
     })
     caseNumber: string;
 
@@ -69,8 +70,9 @@ export class CreateLawsuitDto {
 export class UpdateLawsuitDto {
     @IsString()
     @IsOptional()
-    @Matches(/^\d+\/Pdt\.G\/\d{4}\/PA\.Bjm$/, {
-        message: 'Case number must follow the format xxx/Pdt.G/yyyy/PA.Bjm',
+    @Matches(/^\d+\/Pdt\.(G|P)\/\d{4}\/PA\.Bjm$/, {
+        message:
+            'Case number must follow the format xxx/Pdt.G/yyyy/PA.Bjm or xxx/Pdt.P/yyyy/PA.Bjm',
     })
     caseNumber?: string;
 
