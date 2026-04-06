@@ -419,7 +419,7 @@ export class LawsuitsService {
         }
     }
 
-    public async bulkHandover(lawsuitIds: string[], roleSlug: string) {
+    public async bulkHandover(lawsuitIds: string[], roles: string[]) {
         try {
             const lawsuits =
                 await this.lawsuitsRepository.findByIds(lawsuitIds);
@@ -440,7 +440,8 @@ export class LawsuitsService {
                     const isPermohonan =
                         lawsuit.type === LawsuitType.PERMOHONAN;
 
-                    if (roleSlug === 'panitera-pengganti') {
+                    // Select appropriate role based on lawsuit context
+                    if (roles.includes('panitera-pengganti')) {
                         if (lawsuit.status !== LawsuitStatus.DRAFT) {
                             errors.push(
                                 `${lawsuit.caseNumber}: harus dalam status DRAFT`,
@@ -455,7 +456,10 @@ export class LawsuitsService {
                             lawsuit.status = LawsuitStatus.SUBMITTED_TO_GUGATAN;
                             lawsuit.submittedToGugatanAt = new Date();
                         }
-                    } else if (roleSlug === 'panmud-gugatan' && !isPermohonan) {
+                    } else if (
+                        roles.includes('panmud-gugatan') &&
+                        !isPermohonan
+                    ) {
                         if (
                             lawsuit.status !== LawsuitStatus.RECEIVED_BY_GUGATAN
                         ) {
@@ -467,7 +471,7 @@ export class LawsuitsService {
                         lawsuit.status = LawsuitStatus.SUBMITTED_TO_HUKUM;
                         lawsuit.submittedToHukumAt = new Date();
                     } else if (
-                        roleSlug === 'panmud-permohonan' &&
+                        roles.includes('panmud-permohonan') &&
                         isPermohonan
                     ) {
                         if (
@@ -516,7 +520,7 @@ export class LawsuitsService {
 
     public async bulkReceive(
         lawsuitIds: string[],
-        roleSlug: string,
+        roles: string[],
         userId: string,
     ) {
         try {
@@ -542,7 +546,8 @@ export class LawsuitsService {
                     const isPermohonan =
                         lawsuit.type === LawsuitType.PERMOHONAN;
 
-                    if (roleSlug === 'panmud-gugatan' && !isPermohonan) {
+                    // Select appropriate role based on lawsuit context
+                    if (roles.includes('panmud-gugatan') && !isPermohonan) {
                         if (
                             lawsuit.status !==
                             LawsuitStatus.SUBMITTED_TO_GUGATAN
@@ -556,7 +561,7 @@ export class LawsuitsService {
                         lawsuit.receivedByGugatanAt = new Date();
                         lawsuit.panmudGugatan = user;
                     } else if (
-                        roleSlug === 'panmud-permohonan' &&
+                        roles.includes('panmud-permohonan') &&
                         isPermohonan
                     ) {
                         if (
@@ -571,7 +576,7 @@ export class LawsuitsService {
                         lawsuit.status = LawsuitStatus.RECEIVED_BY_PERMOHONAN;
                         lawsuit.receivedByPermohonanAt = new Date();
                         lawsuit.panmudPermohonan = user;
-                    } else if (roleSlug === 'panmud-hukum') {
+                    } else if (roles.includes('panmud-hukum')) {
                         if (
                             lawsuit.status !== LawsuitStatus.SUBMITTED_TO_HUKUM
                         ) {

@@ -21,12 +21,12 @@ export class DashboardRepository {
         month?: number,
         year?: number,
         userId?: string,
-        roleSlug?: string,
+        roles?: string[],
     ) {
         const qb = this.lawsuitRepo.createQueryBuilder('l');
 
         // Role-based filtering: Panitera Pengganti only sees their own data
-        if (roleSlug === 'panitera-pengganti' && userId) {
+        if (roles?.includes('panitera-pengganti') && userId) {
             qb.andWhere('l.pp_id = :userId', { userId });
         }
 
@@ -43,7 +43,7 @@ export class DashboardRepository {
             month,
             year,
             userId,
-            roleSlug,
+            roles,
             { status: LawsuitStatus.DRAFT, type: LawsuitType.GUGATAN },
         );
 
@@ -51,7 +51,7 @@ export class DashboardRepository {
             month,
             year,
             userId,
-            roleSlug,
+            roles,
             { status: LawsuitStatus.DRAFT, type: LawsuitType.PERMOHONAN },
         );
 
@@ -59,7 +59,7 @@ export class DashboardRepository {
             month,
             year,
             userId,
-            roleSlug,
+            roles,
             [LawsuitStatus.SUBMITTED_TO_HUKUM, LawsuitStatus.RECEIVED_BY_HUKUM],
         );
 
@@ -67,7 +67,7 @@ export class DashboardRepository {
             month,
             year,
             userId,
-            roleSlug,
+            roles,
             [
                 LawsuitStatus.DRAFT,
                 LawsuitStatus.SUBMITTED_TO_HUKUM,
@@ -79,7 +79,7 @@ export class DashboardRepository {
             month,
             year,
             userId,
-            roleSlug,
+            roles,
             { status: LawsuitStatus.RECEIVED_BY_HUKUM },
         );
 
@@ -87,7 +87,7 @@ export class DashboardRepository {
             month,
             year,
             userId,
-            roleSlug,
+            roles,
         );
 
         return {
@@ -105,7 +105,7 @@ export class DashboardRepository {
         month?: number,
         year?: number,
         userId?: string,
-        roleSlug?: string,
+        roles?: string[],
     ) {
         const qb = this.lawsuitRepo
             .createQueryBuilder('l')
@@ -131,7 +131,7 @@ export class DashboardRepository {
             .where('l.classification IS NOT NULL');
 
         // Role-based filtering: Panitera Pengganti only sees their own data
-        if (roleSlug === 'panitera-pengganti' && userId) {
+        if (roles?.includes('panitera-pengganti') && userId) {
             qb.andWhere('l.pp_id = :userId', { userId });
         }
 
@@ -149,7 +149,7 @@ export class DashboardRepository {
             .getRawMany();
     }
 
-    async getTrendBulanan(year: number, userId?: string, roleSlug?: string) {
+    async getTrendBulanan(year: number, userId?: string, roles?: string[]) {
         const qb = this.lawsuitRepo
             .createQueryBuilder('l')
             .select('MONTH(l.created_at)', 'month')
@@ -164,7 +164,7 @@ export class DashboardRepository {
             .where('YEAR(l.created_at) = :year', { year });
 
         // Role-based filtering: Panitera Pengganti only sees their own data
-        if (roleSlug === 'panitera-pengganti' && userId) {
+        if (roles?.includes('panitera-pengganti') && userId) {
             qb.andWhere('l.pp_id = :userId', { userId });
         }
 
@@ -177,13 +177,13 @@ export class DashboardRepository {
         month: number | undefined,
         year: number | undefined,
         userId: string | undefined,
-        roleSlug: string | undefined,
+        roles: string[] | undefined,
         conditions: Partial<Pick<LawsuitEntity, 'status' | 'type'>>,
     ): Promise<number> {
         const qb = this.lawsuitRepo.createQueryBuilder('l');
 
         // Role-based filtering: Panitera Pengganti only sees their own data
-        if (roleSlug === 'panitera-pengganti' && userId) {
+        if (roles?.includes('panitera-pengganti') && userId) {
             qb.andWhere('l.pp_id = :userId', { userId });
         }
 
@@ -208,7 +208,7 @@ export class DashboardRepository {
         month: number | undefined,
         year: number | undefined,
         userId: string | undefined,
-        roleSlug: string | undefined,
+        roles: string[] | undefined,
         statuses: LawsuitStatus[],
     ): Promise<number> {
         const qb = this.lawsuitRepo
@@ -216,7 +216,7 @@ export class DashboardRepository {
             .where('l.status IN (:...statuses)', { statuses });
 
         // Role-based filtering: Panitera Pengganti only sees their own data
-        if (roleSlug === 'panitera-pengganti' && userId) {
+        if (roles?.includes('panitera-pengganti') && userId) {
             qb.andWhere('l.pp_id = :userId', { userId });
         }
 
@@ -234,7 +234,7 @@ export class DashboardRepository {
         month: number | undefined,
         year: number | undefined,
         userId: string | undefined,
-        roleSlug: string | undefined,
+        roles: string[] | undefined,
         excludeStatuses: LawsuitStatus[],
     ): Promise<number> {
         const qb = this.lawsuitRepo
@@ -244,7 +244,7 @@ export class DashboardRepository {
             });
 
         // Role-based filtering: Panitera Pengganti only sees their own data
-        if (roleSlug === 'panitera-pengganti' && userId) {
+        if (roles?.includes('panitera-pengganti') && userId) {
             qb.andWhere('l.pp_id = :userId', { userId });
         }
 
@@ -262,13 +262,13 @@ export class DashboardRepository {
         month?: number,
         year?: number,
         userId?: string,
-        roleSlug?: string,
+        roles?: string[],
     ): Promise<number> {
         const qb = this.upayaHukumRepo.createQueryBuilder('u');
 
         // Role-based filtering: Panitera Pengganti only sees their own data
         // Need to join through lawsuit to filter by pp_id
-        if (roleSlug === 'panitera-pengganti' && userId) {
+        if (roles?.includes('panitera-pengganti') && userId) {
             qb.innerJoin('u.lawsuit', 'l');
             qb.andWhere('l.pp_id = :userId', { userId });
         }

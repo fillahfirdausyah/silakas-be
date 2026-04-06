@@ -97,7 +97,7 @@ export class LawsuitsController {
     async bulkHandover(@Req() req: any, @Body() body: BulkHandoverDto) {
         const result = await this.lawsuitsService.bulkHandover(
             body.lawsuitIds,
-            req.role,
+            req.roles,
         );
         return {
             message: 'Bulk serah terima berhasil',
@@ -110,7 +110,7 @@ export class LawsuitsController {
     async bulkReceive(@Req() req: any, @Body() body: BulkHandoverDto) {
         const result = await this.lawsuitsService.bulkReceive(
             body.lawsuitIds,
-            req.role,
+            req.roles,
             req.userId,
         );
         return {
@@ -122,7 +122,7 @@ export class LawsuitsController {
     @Post(':id/handover')
     @Roles('panitera-pengganti', 'panmud-gugatan', 'panmud-permohonan')
     async handover(@Req() req: any, @Param('id') id: string) {
-        const roleSlug = req.role;
+        const roles = req.roles as string[];
 
         // Get lawsuit to determine type
         const lawsuitResult = await this.lawsuitsService.findOne(id);
@@ -130,17 +130,18 @@ export class LawsuitsController {
         const isPermohonan = lawsuit.type === LawsuitType.PERMOHONAN;
 
         let result;
-        if (roleSlug === 'panitera-pengganti') {
+        // Role selection: pick the appropriate role based on lawsuit context
+        if (roles.includes('panitera-pengganti')) {
             // PP submits to either Gugatan or Permohonan based on type
             if (isPermohonan) {
                 result = await this.lawsuitsService.handoverToPermohonan(id);
             } else {
                 result = await this.lawsuitsService.handoverToGugatan(id);
             }
-        } else if (roleSlug === 'panmud-gugatan' && !isPermohonan) {
+        } else if (roles.includes('panmud-gugatan') && !isPermohonan) {
             // Panmud Gugatan submits to Hukum (only for Gugatan type)
             result = await this.lawsuitsService.handoverToHukum(id);
-        } else if (roleSlug === 'panmud-permohonan' && isPermohonan) {
+        } else if (roles.includes('panmud-permohonan') && isPermohonan) {
             // Panmud Permohonan submits to Hukum (only for Permohonan type)
             result =
                 await this.lawsuitsService.handoverFromPermohonanToHukum(id);
@@ -157,7 +158,7 @@ export class LawsuitsController {
     @Post(':id/receive')
     @Roles('panmud-gugatan', 'panmud-permohonan', 'panmud-hukum')
     async receive(@Req() req: any, @Param('id') id: string) {
-        const roleSlug = req.role;
+        const roles = req.roles as string[];
 
         // Get lawsuit to determine type
         const lawsuitResult = await this.lawsuitsService.findOne(id);
@@ -165,17 +166,18 @@ export class LawsuitsController {
         const isPermohonan = lawsuit.type === LawsuitType.PERMOHONAN;
 
         let result;
-        if (roleSlug === 'panmud-gugatan' && !isPermohonan) {
+        // Role selection: pick the appropriate role based on lawsuit context
+        if (roles.includes('panmud-gugatan') && !isPermohonan) {
             result = await this.lawsuitsService.receiveByGugatan(
                 id,
                 req.userId,
             );
-        } else if (roleSlug === 'panmud-permohonan' && isPermohonan) {
+        } else if (roles.includes('panmud-permohonan') && isPermohonan) {
             result = await this.lawsuitsService.receiveByPermohonan(
                 id,
                 req.userId,
             );
-        } else if (roleSlug === 'panmud-hukum') {
+        } else if (roles.includes('panmud-hukum')) {
             result = await this.lawsuitsService.receiveByHukum(id, req.userId);
         } else {
             throw new ForbiddenException(

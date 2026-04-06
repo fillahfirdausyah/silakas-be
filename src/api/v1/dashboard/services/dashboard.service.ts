@@ -9,7 +9,7 @@ export class DashboardService {
     async getStatistics(
         query: GetDashboardDto,
         userId?: string,
-        roleSlug?: string,
+        roles?: string[],
     ) {
         const { month, year } = query;
         const resolvedYear = year ?? new Date().getFullYear();
@@ -20,18 +20,18 @@ export class DashboardService {
                     month,
                     resolvedYear,
                     userId,
-                    roleSlug,
+                    roles,
                 ),
                 this.dashboardRepository.getBerkasPerKlasifikasi(
                     month,
                     resolvedYear,
                     userId,
-                    roleSlug,
+                    roles,
                 ),
                 this.dashboardRepository.getTrendBulanan(
                     resolvedYear,
                     userId,
-                    roleSlug,
+                    roles,
                 ),
             ],
         );

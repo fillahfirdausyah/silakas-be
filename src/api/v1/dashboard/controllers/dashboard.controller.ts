@@ -19,12 +19,12 @@ export class DashboardController {
     async getStatistics(@Query() query: GetDashboardDto, @Req() req: any) {
         // Extract user context for role-based data filtering
         const userId = req.userId;
-        const roleSlug = req.role;
+        const roles = req.roles;
 
         const result = await this.dashboardService.getStatistics(
             query,
             userId,
-            roleSlug,
+            roles,
         );
         return {
             message: 'Statistik berhasil diambil',
