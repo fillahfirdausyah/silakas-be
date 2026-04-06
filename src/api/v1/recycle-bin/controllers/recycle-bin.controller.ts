@@ -5,6 +5,7 @@ import {
     Param,
     Patch,
     Query,
+    Req,
     UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -25,9 +26,10 @@ export class RecycleBinController {
     constructor(private readonly recycleBinService: RecycleBinService) {}
 
     @Get()
-    @Roles('super-admin')
-    async findAll(@Query() query: GetRecycleBinDto) {
-        const result = await this.recycleBinService.findAll(query);
+    @Roles('super-admin', 'panmud-gugatan', 'panmud-permohonan')
+    async findAll(@Req() req: any, @Query() query: GetRecycleBinDto) {
+        const roles = req.roles as string[];
+        const result = await this.recycleBinService.findAll(query, roles);
         return {
             message: 'Data recycle bin berhasil diambil',
             payload: result.payload,
@@ -36,9 +38,10 @@ export class RecycleBinController {
     }
 
     @Patch('lawsuits/:id/restore')
-    @Roles('super-admin')
-    async restoreLawsuit(@Param('id') id: string) {
-        const result = await this.recycleBinService.restoreLawsuit(id);
+    @Roles('super-admin', 'panmud-gugatan', 'panmud-permohonan')
+    async restoreLawsuit(@Req() req: any, @Param('id') id: string) {
+        const roles = req.roles as string[];
+        const result = await this.recycleBinService.restoreLawsuit(id, roles);
         return {
             message: 'Berkas berhasil dipulihkan',
             payload: result.payload,
@@ -56,9 +59,13 @@ export class RecycleBinController {
     }
 
     @Delete('lawsuits/:id')
-    @Roles('super-admin')
-    async hardDeleteLawsuit(@Param('id') id: string) {
-        const result = await this.recycleBinService.hardDeleteLawsuit(id);
+    @Roles('super-admin', 'panmud-gugatan', 'panmud-permohonan')
+    async hardDeleteLawsuit(@Req() req: any, @Param('id') id: string) {
+        const roles = req.roles as string[];
+        const result = await this.recycleBinService.hardDeleteLawsuit(
+            id,
+            roles,
+        );
         return {
             message: 'Berkas berhasil dihapus permanen',
             payload: result.payload,

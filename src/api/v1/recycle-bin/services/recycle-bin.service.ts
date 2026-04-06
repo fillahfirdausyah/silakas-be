@@ -1,8 +1,14 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+    ForbiddenException,
+    Injectable,
+    Logger,
+    NotFoundException,
+} from '@nestjs/common';
 import { LawsuitsRepository } from '../../lawsuits/repositories/lawsuits.repository';
 import { UpayaHukumRepository } from '../../upaya-hukum/repositories/upaya-hukum.repository';
 import { GetRecycleBinDto } from '../dtos/recycle-bin.dto';
 import { handleServiceError } from '../../../../shared/utils/handler-service-error.util';
+import { LawsuitType } from '../../../../entities/lawsuit.entity';
 
 @Injectable()
 export class RecycleBinService {
@@ -13,22 +19,40 @@ export class RecycleBinService {
         private readonly upayaHukumRepository: UpayaHukumRepository,
     ) {}
 
-    async findAll(query: GetRecycleBinDto) {
+    async findAll(query: GetRecycleBinDto, roles: string[]) {
         try {
+            const isSuperAdmin = roles.includes('super-admin');
+            const isPanmudGugatan = roles.includes('panmud-gugatan');
+            const isPanmudPermohonan = roles.includes('panmud-permohonan');
+
             const items: any[] = [];
 
             // Fetch deleted lawsuits if type filter is not 'upaya-hukum'
             if (!query.type || query.type === 'lawsuit') {
-                const [lawsuits] = await this.lawsuitsRepository.findDeletedItems({
-                    page: query.page ?? 1,
-                    limit: query.limit ?? 10,
-                    search: query.search ?? '',
-                    sortBy: query.sortBy ?? 'deletedAt',
-                    sortType: query.sortType ?? 'DESC',
+                const [lawsuits] =
+                    await this.lawsuitsRepository.findDeletedItems({
+                        page: query.page ?? 1,
+                        limit: query.limit ?? 10,
+                        search: query.search ?? '',
+                        sortBy: query.sortBy ?? 'deletedAt',
+                        sortType: query.sortType ?? 'DESC',
+                    });
+
+                // Apply role-based filtering for lawsuits
+                const filteredLawsuits = lawsuits.filter((l) => {
+                    // Super-admin can see all
+                    if (isSuperAdmin) return true;
+                    // Panmud-gugatan can only see gugatan type
+                    if (isPanmudGugatan && l.type === LawsuitType.GUGATAN)
+                        return true;
+                    // Panmud-permohonan can only see permohonan type
+                    if (isPanmudPermohonan && l.type === LawsuitType.PERMOHONAN)
+                        return true;
+                    return false;
                 });
 
                 items.push(
-                    ...lawsuits.map((l) => ({
+                    ...filteredLawsuits.map((l) => ({
                         id: l.id,
                         type: 'lawsuit' as const,
                         caseNumber: l.caseNumber,
@@ -41,7 +65,8 @@ export class RecycleBinService {
             }
 
             // Fetch deleted upaya-hukum if type filter is not 'lawsuit'
-            if (!query.type || query.type === 'upaya-hukum') {
+            // Only super-admin can see upaya-hukum in recycle bin
+            if ((!query.type || query.type === 'upaya-hukum') && isSuperAdmin) {
                 const [upayaHukum] =
                     await this.upayaHukumRepository.findDeletedItems({
                         page: query.page ?? 1,
@@ -67,7 +92,9 @@ export class RecycleBinService {
             items.sort((a, b) => {
                 const aTime = a.deletedAt ? new Date(a.deletedAt).getTime() : 0;
                 const bTime = b.deletedAt ? new Date(b.deletedAt).getTime() : 0;
-                return query.sortType === 'DESC' ? bTime - aTime : aTime - bTime;
+                return query.sortType === 'DESC'
+                    ? bTime - aTime
+                    : aTime - bTime;
             });
 
             // Apply pagination to combined results
@@ -95,11 +122,34 @@ export class RecycleBinService {
         }
     }
 
-    async restoreLawsuit(id: string) {
+    async restoreLawsuit(id: string, roles: string[]) {
         try {
             const lawsuit = await this.lawsuitsRepository.findDeletedById(id);
             if (!lawsuit || !lawsuit.deletedAt) {
-                throw new NotFoundException('Berkas tidak ditemukan di recycle bin');
+                throw new NotFoundException(
+                    'Berkas tidak ditemukan di recycle bin',
+                );
+            }
+
+            // Role-type validation for restore
+            const isSuperAdmin = roles.includes('super-admin');
+            const isPanmudGugatan = roles.includes('panmud-gugatan');
+            const isPanmudPermohonan = roles.includes('panmud-permohonan');
+
+            if (!isSuperAdmin) {
+                if (isPanmudGugatan && lawsuit.type !== LawsuitType.GUGATAN) {
+                    throw new ForbiddenException(
+                        'Panmud Gugatan hanya dapat memulihkan berkas Gugatan',
+                    );
+                }
+                if (
+                    isPanmudPermohonan &&
+                    lawsuit.type !== LawsuitType.PERMOHONAN
+                ) {
+                    throw new ForbiddenException(
+                        'Panmud Permohonan hanya dapat memulihkan berkas Permohonan',
+                    );
+                }
             }
 
             await this.lawsuitsRepository.restore(id);
@@ -121,9 +171,12 @@ export class RecycleBinService {
 
     async restoreUpayaHukum(id: string) {
         try {
-            const upayaHukum = await this.upayaHukumRepository.findDeletedById(id);
+            const upayaHukum =
+                await this.upayaHukumRepository.findDeletedById(id);
             if (!upayaHukum || !upayaHukum.deletedAt) {
-                throw new NotFoundException('Upaya Hukum tidak ditemukan di recycle bin');
+                throw new NotFoundException(
+                    'Upaya Hukum tidak ditemukan di recycle bin',
+                );
             }
 
             await this.upayaHukumRepository.restore(id);
@@ -143,11 +196,34 @@ export class RecycleBinService {
         }
     }
 
-    async hardDeleteLawsuit(id: string) {
+    async hardDeleteLawsuit(id: string, roles: string[]) {
         try {
             const lawsuit = await this.lawsuitsRepository.findDeletedById(id);
             if (!lawsuit || !lawsuit.deletedAt) {
-                throw new NotFoundException('Berkas tidak ditemukan di recycle bin');
+                throw new NotFoundException(
+                    'Berkas tidak ditemukan di recycle bin',
+                );
+            }
+
+            // Role-type validation for hard delete
+            const isSuperAdmin = roles.includes('super-admin');
+            const isPanmudGugatan = roles.includes('panmud-gugatan');
+            const isPanmudPermohonan = roles.includes('panmud-permohonan');
+
+            if (!isSuperAdmin) {
+                if (isPanmudGugatan && lawsuit.type !== LawsuitType.GUGATAN) {
+                    throw new ForbiddenException(
+                        'Panmud Gugatan hanya dapat menghapus permanen berkas Gugatan',
+                    );
+                }
+                if (
+                    isPanmudPermohonan &&
+                    lawsuit.type !== LawsuitType.PERMOHONAN
+                ) {
+                    throw new ForbiddenException(
+                        'Panmud Permohonan hanya dapat menghapus permanen berkas Permohonan',
+                    );
+                }
             }
 
             await this.lawsuitsRepository.hardDelete(id);
@@ -168,9 +244,12 @@ export class RecycleBinService {
 
     async hardDeleteUpayaHukum(id: string) {
         try {
-            const upayaHukum = await this.upayaHukumRepository.findDeletedById(id);
+            const upayaHukum =
+                await this.upayaHukumRepository.findDeletedById(id);
             if (!upayaHukum || !upayaHukum.deletedAt) {
-                throw new NotFoundException('Upaya Hukum tidak ditemukan di recycle bin');
+                throw new NotFoundException(
+                    'Upaya Hukum tidak ditemukan di recycle bin',
+                );
             }
 
             await this.upayaHukumRepository.hardDelete(id);

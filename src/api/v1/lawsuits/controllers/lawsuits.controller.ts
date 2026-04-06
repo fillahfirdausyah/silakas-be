@@ -202,8 +202,30 @@ export class LawsuitsController {
     }
 
     @Delete(':id')
-    @Roles('super-admin')
-    async remove(@Param('id') id: string) {
+    @Roles('super-admin', 'panmud-gugatan', 'panmud-permohonan')
+    async remove(@Req() req: any, @Param('id') id: string) {
+        const roles = req.roles as string[];
+
+        // Super-admin has universal access - no type check needed
+        if (!roles.includes('super-admin')) {
+            // Get lawsuit to determine type for role validation
+            const lawsuitResult = await this.lawsuitsService.findOne(id);
+            const lawsuit = lawsuitResult.payload;
+            const isPermohonan = lawsuit.type === LawsuitType.PERMOHONAN;
+
+            // Role-type validation: panmud-gugatan can only delete gugatan, panmud-permohonan can only delete permohonan
+            if (roles.includes('panmud-gugatan') && isPermohonan) {
+                throw new ForbiddenException(
+                    'Panmud Gugatan hanya dapat menghapus berkas Gugatan',
+                );
+            }
+            if (roles.includes('panmud-permohonan') && !isPermohonan) {
+                throw new ForbiddenException(
+                    'Panmud Permohonan hanya dapat menghapus berkas Permohonan',
+                );
+            }
+        }
+
         const result = await this.lawsuitsService.softDelete(id);
         return {
             message: 'Berkas berhasil dihapus',
