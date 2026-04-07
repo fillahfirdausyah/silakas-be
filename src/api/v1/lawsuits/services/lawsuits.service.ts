@@ -883,7 +883,8 @@ export class LawsuitsService {
                     worksheet.getCell(`D${rowNum}`).value = lawsuit.ikrarDate
                         ? formatShortDate(lawsuit.ikrarDate)
                         : '';
-                    worksheet.getCell(`E${rowNum}`).value = '';
+                    worksheet.getCell(`E${rowNum}`).value =
+                        lawsuit.description || '';
 
                     // Style data cells
                     ['A', 'B', 'C', 'D', 'E'].forEach((col) => {
@@ -904,7 +905,8 @@ export class LawsuitsService {
                     worksheet.getCell(`E${rowNum}`).value = lawsuit.ikrarDate
                         ? formatShortDate(lawsuit.ikrarDate)
                         : '';
-                    worksheet.getCell(`F${rowNum}`).value = '';
+                    worksheet.getCell(`F${rowNum}`).value =
+                        lawsuit.description || '';
 
                     // Style data cells
                     ['A', 'B', 'C', 'D', 'E', 'F'].forEach((col) => {
