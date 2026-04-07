@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { DashboardRepository } from '../repositories/dashboard.repository';
 import { GetDashboardDto } from '../dtos/dashboard.dto';
+import { GetStatisticDetailDto } from '../dtos/get-statistic-detail.dto';
+import {
+    LawsuitStatus,
+    LawsuitType,
+} from '../../../../entities/lawsuit.entity';
 
 @Injectable()
 export class DashboardService {
@@ -11,7 +16,7 @@ export class DashboardService {
         userId?: string,
         roles?: string[],
     ) {
-        const { month, year } = query;
+        const { month, year, viewAsRole } = query;
         const resolvedYear = year ?? new Date().getFullYear();
 
         const [summary, berkasPerKlasifikasi, trendBulanan] = await Promise.all(
@@ -21,17 +26,20 @@ export class DashboardService {
                     resolvedYear,
                     userId,
                     roles,
+                    viewAsRole,
                 ),
                 this.dashboardRepository.getBerkasPerKlasifikasi(
                     month,
                     resolvedYear,
                     userId,
                     roles,
+                    viewAsRole,
                 ),
                 this.dashboardRepository.getTrendBulanan(
                     resolvedYear,
                     userId,
                     roles,
+                    viewAsRole,
                 ),
             ],
         );
@@ -85,6 +93,69 @@ export class DashboardService {
                     }),
                 ),
                 trendBulanan: trendFormatted,
+            },
+        };
+    }
+
+    /**
+     * Get lawsuit detail list for statistic cards.
+     * Parses comma-separated status/excludeStatuses params.
+     */
+    async getStatisticDetail(
+        query: GetStatisticDetailDto,
+        userId?: string,
+        roles?: string[],
+    ) {
+        const {
+            page = 1,
+            limit = 100,
+            month,
+            year,
+            viewAsRole,
+            status,
+            type,
+            excludeStatuses,
+            hasUpayaHukum,
+        } = query;
+
+        const resolvedYear = year ?? new Date().getFullYear();
+
+        // Parse comma-separated status strings into arrays
+        const statusArray: LawsuitStatus[] | undefined = status
+            ? status.split(',').map((s) => s.trim() as LawsuitStatus)
+            : undefined;
+
+        const excludeStatusesArray: LawsuitStatus[] | undefined =
+            excludeStatuses
+                ? excludeStatuses
+                      .split(',')
+                      .map((s) => s.trim() as LawsuitStatus)
+                : undefined;
+
+        const typeValue: LawsuitType | undefined = type
+            ? (type as LawsuitType)
+            : undefined;
+
+        const result = await this.dashboardRepository.getStatisticDetail(
+            page,
+            limit,
+            month,
+            resolvedYear,
+            userId,
+            roles,
+            viewAsRole,
+            statusArray,
+            typeValue,
+            excludeStatusesArray,
+            hasUpayaHukum,
+        );
+
+        return {
+            payload: result.data,
+            meta: {
+                total: result.total,
+                page: result.page,
+                limit: result.limit,
             },
         };
     }
