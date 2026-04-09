@@ -130,23 +130,39 @@ export class LawsuitsController {
         const isPermohonan = lawsuit.type === LawsuitType.PERMOHONAN;
 
         let result;
-        // Role selection: pick the appropriate role based on lawsuit context
-        if (roles.includes('panitera-pengganti')) {
-            // PP submits to either Gugatan or Permohonan based on type
+        // Status-based routing: determine action from document status, then validate role
+        const status = lawsuit.status;
+
+        if (status === 'DRAFT') {
+            if (!roles.includes('panitera-pengganti')) {
+                throw new ForbiddenException(
+                    'Hanya Panitera Pengganti yang dapat menyerahkan berkas DRAFT',
+                );
+            }
             if (isPermohonan) {
                 result = await this.lawsuitsService.handoverToPermohonan(id);
             } else {
                 result = await this.lawsuitsService.handoverToGugatan(id);
             }
-        } else if (roles.includes('panmud-gugatan') && !isPermohonan) {
-            // Panmud Gugatan submits to Hukum (only for Gugatan type)
+        } else if (status === 'RECEIVED_BY_GUGATAN' && !isPermohonan) {
+            if (!roles.includes('panmud-gugatan')) {
+                throw new ForbiddenException(
+                    'Hanya Panmud Gugatan yang dapat menyerahkan berkas ini ke Hukum',
+                );
+            }
             result = await this.lawsuitsService.handoverToHukum(id);
-        } else if (roles.includes('panmud-permohonan') && isPermohonan) {
-            // Panmud Permohonan submits to Hukum (only for Permohonan type)
+        } else if (status === 'RECEIVED_BY_PERMOHONAN' && isPermohonan) {
+            if (!roles.includes('panmud-permohonan')) {
+                throw new ForbiddenException(
+                    'Hanya Panmud Permohonan yang dapat menyerahkan berkas ini ke Hukum',
+                );
+            }
             result =
                 await this.lawsuitsService.handoverFromPermohonanToHukum(id);
         } else {
-            throw new ForbiddenException('Role tidak valid untuk penyerahan');
+            throw new ForbiddenException(
+                'Status berkas tidak valid untuk penyerahan',
+            );
         }
 
         return {
@@ -166,22 +182,39 @@ export class LawsuitsController {
         const isPermohonan = lawsuit.type === LawsuitType.PERMOHONAN;
 
         let result;
-        // Role selection: pick the appropriate role based on lawsuit context
-        if (roles.includes('panmud-gugatan') && !isPermohonan) {
+        // Status-based routing: determine action from document status, then validate role
+        const status = lawsuit.status;
+
+        if (status === 'SUBMITTED_TO_GUGATAN' && !isPermohonan) {
+            if (!roles.includes('panmud-gugatan')) {
+                throw new ForbiddenException(
+                    'Hanya Panmud Gugatan yang dapat menerima berkas ini',
+                );
+            }
             result = await this.lawsuitsService.receiveByGugatan(
                 id,
                 req.userId,
             );
-        } else if (roles.includes('panmud-permohonan') && isPermohonan) {
+        } else if (status === 'SUBMITTED_TO_PERMOHONAN' && isPermohonan) {
+            if (!roles.includes('panmud-permohonan')) {
+                throw new ForbiddenException(
+                    'Hanya Panmud Permohonan yang dapat menerima berkas ini',
+                );
+            }
             result = await this.lawsuitsService.receiveByPermohonan(
                 id,
                 req.userId,
             );
-        } else if (roles.includes('panmud-hukum')) {
+        } else if (status === 'SUBMITTED_TO_HUKUM') {
+            if (!roles.includes('panmud-hukum')) {
+                throw new ForbiddenException(
+                    'Hanya Panmud Hukum yang dapat menerima berkas ini',
+                );
+            }
             result = await this.lawsuitsService.receiveByHukum(id, req.userId);
         } else {
             throw new ForbiddenException(
-                'Role tidak valid untuk menerima berkas ini',
+                'Status berkas tidak valid untuk penerimaan',
             );
         }
 

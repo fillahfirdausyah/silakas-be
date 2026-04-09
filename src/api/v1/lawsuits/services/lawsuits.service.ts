@@ -440,11 +440,11 @@ export class LawsuitsService {
                     const isPermohonan =
                         lawsuit.type === LawsuitType.PERMOHONAN;
 
-                    // Select appropriate role based on lawsuit context
-                    if (roles.includes('panitera-pengganti')) {
-                        if (lawsuit.status !== LawsuitStatus.DRAFT) {
+                    // Status-based routing: determine action from document status, then validate role
+                    if (lawsuit.status === LawsuitStatus.DRAFT) {
+                        if (!roles.includes('panitera-pengganti')) {
                             errors.push(
-                                `${lawsuit.caseNumber}: harus dalam status DRAFT`,
+                                `${lawsuit.caseNumber}: hanya Panitera Pengganti yang dapat menyerahkan berkas DRAFT`,
                             );
                             continue;
                         }
@@ -457,29 +457,25 @@ export class LawsuitsService {
                             lawsuit.submittedToGugatanAt = new Date();
                         }
                     } else if (
-                        roles.includes('panmud-gugatan') &&
+                        lawsuit.status === LawsuitStatus.RECEIVED_BY_GUGATAN &&
                         !isPermohonan
                     ) {
-                        if (
-                            lawsuit.status !== LawsuitStatus.RECEIVED_BY_GUGATAN
-                        ) {
+                        if (!roles.includes('panmud-gugatan')) {
                             errors.push(
-                                `${lawsuit.caseNumber}: harus sudah diterima oleh Panmud Gugatan`,
+                                `${lawsuit.caseNumber}: hanya Panmud Gugatan yang dapat menyerahkan ke Hukum`,
                             );
                             continue;
                         }
                         lawsuit.status = LawsuitStatus.SUBMITTED_TO_HUKUM;
                         lawsuit.submittedToHukumAt = new Date();
                     } else if (
-                        roles.includes('panmud-permohonan') &&
+                        lawsuit.status ===
+                            LawsuitStatus.RECEIVED_BY_PERMOHONAN &&
                         isPermohonan
                     ) {
-                        if (
-                            lawsuit.status !==
-                            LawsuitStatus.RECEIVED_BY_PERMOHONAN
-                        ) {
+                        if (!roles.includes('panmud-permohonan')) {
                             errors.push(
-                                `${lawsuit.caseNumber}: harus sudah diterima oleh Panmud Permohonan`,
+                                `${lawsuit.caseNumber}: hanya Panmud Permohonan yang dapat menyerahkan ke Hukum`,
                             );
                             continue;
                         }
@@ -487,7 +483,7 @@ export class LawsuitsService {
                         lawsuit.submittedToHukumAt = new Date();
                     } else {
                         errors.push(
-                            `${lawsuit.caseNumber}: role tidak valid untuk penyerahan`,
+                            `${lawsuit.caseNumber}: status berkas tidak valid untuk penyerahan`,
                         );
                         continue;
                     }
@@ -546,14 +542,14 @@ export class LawsuitsService {
                     const isPermohonan =
                         lawsuit.type === LawsuitType.PERMOHONAN;
 
-                    // Select appropriate role based on lawsuit context
-                    if (roles.includes('panmud-gugatan') && !isPermohonan) {
-                        if (
-                            lawsuit.status !==
-                            LawsuitStatus.SUBMITTED_TO_GUGATAN
-                        ) {
+                    // Status-based routing: determine action from document status, then validate role
+                    if (
+                        lawsuit.status === LawsuitStatus.SUBMITTED_TO_GUGATAN &&
+                        !isPermohonan
+                    ) {
+                        if (!roles.includes('panmud-gugatan')) {
                             errors.push(
-                                `${lawsuit.caseNumber}: belum diserahkan ke Panmud Gugatan`,
+                                `${lawsuit.caseNumber}: hanya Panmud Gugatan yang dapat menerima berkas ini`,
                             );
                             continue;
                         }
@@ -561,27 +557,25 @@ export class LawsuitsService {
                         lawsuit.receivedByGugatanAt = new Date();
                         lawsuit.panmudGugatan = user;
                     } else if (
-                        roles.includes('panmud-permohonan') &&
+                        lawsuit.status ===
+                            LawsuitStatus.SUBMITTED_TO_PERMOHONAN &&
                         isPermohonan
                     ) {
-                        if (
-                            lawsuit.status !==
-                            LawsuitStatus.SUBMITTED_TO_PERMOHONAN
-                        ) {
+                        if (!roles.includes('panmud-permohonan')) {
                             errors.push(
-                                `${lawsuit.caseNumber}: belum diserahkan ke Panmud Permohonan`,
+                                `${lawsuit.caseNumber}: hanya Panmud Permohonan yang dapat menerima berkas ini`,
                             );
                             continue;
                         }
                         lawsuit.status = LawsuitStatus.RECEIVED_BY_PERMOHONAN;
                         lawsuit.receivedByPermohonanAt = new Date();
                         lawsuit.panmudPermohonan = user;
-                    } else if (roles.includes('panmud-hukum')) {
-                        if (
-                            lawsuit.status !== LawsuitStatus.SUBMITTED_TO_HUKUM
-                        ) {
+                    } else if (
+                        lawsuit.status === LawsuitStatus.SUBMITTED_TO_HUKUM
+                    ) {
+                        if (!roles.includes('panmud-hukum')) {
                             errors.push(
-                                `${lawsuit.caseNumber}: belum diserahkan ke Panmud Hukum`,
+                                `${lawsuit.caseNumber}: hanya Panmud Hukum yang dapat menerima berkas ini`,
                             );
                             continue;
                         }
@@ -590,7 +584,7 @@ export class LawsuitsService {
                         lawsuit.panmudHukum = user;
                     } else {
                         errors.push(
-                            `${lawsuit.caseNumber}: role tidak valid untuk penerimaan`,
+                            `${lawsuit.caseNumber}: status berkas tidak valid untuk penerimaan`,
                         );
                         continue;
                     }
