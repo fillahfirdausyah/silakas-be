@@ -11,6 +11,7 @@ import { DashboardModule } from './api/v1/dashboard/dashboard.module';
 import { UpayaHukumModule } from './api/v1/upaya-hukum/upaya-hukum.module';
 import { UsersModule } from './api/v1/users/users.module';
 import { RecycleBinModule } from './api/v1/recycle-bin/recycle-bin.module';
+import { PublicModule } from './api/v1/public/public.module';
 
 @Module({
     imports: [
@@ -61,6 +62,7 @@ import { RecycleBinModule } from './api/v1/recycle-bin/recycle-bin.module';
         DocumentClassificationsModule,
         UpayaHukumModule,
         RecycleBinModule,
+        PublicModule,
     ],
 })
 export class AppModule {}
