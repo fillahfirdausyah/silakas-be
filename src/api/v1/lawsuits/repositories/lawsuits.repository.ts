@@ -139,6 +139,7 @@ export class LawsuitsRepository {
     findByCaseNumber(caseNumber: string) {
         return this.lawsuitsRepository.findOne({
             where: { caseNumber },
+            withDeleted: true,
         });
     }
 
