@@ -50,7 +50,7 @@ export class LawsuitsRepository {
         // Apply search filter
         if (metadata.search) {
             qb.andWhere(
-                '(LOWER(lawsuit.caseNumber) LIKE LOWER(:search) OR LOWER(lawsuit.classification) LIKE LOWER(:search))',
+                '(LOWER(lawsuit.caseNumber) LIKE LOWER(:search) OR LOWER(lawsuit.classification) LIKE LOWER(:search) OR LOWER(lawsuit.description) LIKE LOWER(:search))',
                 { search: `%${metadata.search}%` },
             );
         }
@@ -199,7 +199,7 @@ export class LawsuitsRepository {
 
         if (metadata.search) {
             qb.andWhere(
-                '(LOWER(lawsuit.caseNumber) LIKE LOWER(:search) OR LOWER(lawsuit.classification) LIKE LOWER(:search))',
+                '(LOWER(lawsuit.caseNumber) LIKE LOWER(:search) OR LOWER(lawsuit.classification) LIKE LOWER(:search) OR LOWER(lawsuit.description) LIKE LOWER(:search))',
                 { search: `%${metadata.search}%` },
             );
         }

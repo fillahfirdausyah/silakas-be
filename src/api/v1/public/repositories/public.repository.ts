@@ -51,7 +51,7 @@ export class PublicRepository {
 
         if (q) {
             qb.where(
-                '(LOWER(lawsuit.caseNumber) LIKE LOWER(:q) OR LOWER(lawsuit.classification) LIKE LOWER(:q))',
+                '(LOWER(lawsuit.caseNumber) LIKE LOWER(:q) OR LOWER(lawsuit.classification) LIKE LOWER(:q) OR LOWER(lawsuit.description) LIKE LOWER(:q))',
                 { q: `%${q}%` },
             );
         }
@@ -112,10 +112,14 @@ export class PublicRepository {
 
         const totalBerkas = await qb.getCount();
 
-        const belumDiserahkanGugatan = await this.countByCondition(month, year, {
-            status: LawsuitStatus.DRAFT,
-            type: LawsuitType.GUGATAN,
-        });
+        const belumDiserahkanGugatan = await this.countByCondition(
+            month,
+            year,
+            {
+                status: LawsuitStatus.DRAFT,
+                type: LawsuitType.GUGATAN,
+            },
+        );
 
         const belumDiserahkanPermohonan = await this.countByCondition(
             month,
@@ -131,11 +135,15 @@ export class PublicRepository {
             LawsuitStatus.RECEIVED_BY_HUKUM,
         ]);
 
-        const belumDiserahkanHukum = await this.countByStatusNotIn(month, year, [
-            LawsuitStatus.DRAFT,
-            LawsuitStatus.SUBMITTED_TO_HUKUM,
-            LawsuitStatus.RECEIVED_BY_HUKUM,
-        ]);
+        const belumDiserahkanHukum = await this.countByStatusNotIn(
+            month,
+            year,
+            [
+                LawsuitStatus.DRAFT,
+                LawsuitStatus.SUBMITTED_TO_HUKUM,
+                LawsuitStatus.RECEIVED_BY_HUKUM,
+            ],
+        );
 
         const diterimaHukum = await this.countByCondition(month, year, {
             status: LawsuitStatus.RECEIVED_BY_HUKUM,
