@@ -871,8 +871,8 @@ export class LawsuitsService {
                     // Without BHT column
                     worksheet.getCell(`A${rowNum}`).value = index + 1;
                     worksheet.getCell(`B${rowNum}`).value = lawsuit.caseNumber;
-                    worksheet.getCell(`C${rowNum}`).value = lawsuit.createdAt
-                        ? formatShortDate(lawsuit.createdAt)
+                    worksheet.getCell(`C${rowNum}`).value = lawsuit.decisionDate
+                        ? formatShortDate(lawsuit.decisionDate)
                         : '';
                     worksheet.getCell(`D${rowNum}`).value = lawsuit.ikrarDate
                         ? formatShortDate(lawsuit.ikrarDate)
@@ -890,8 +890,8 @@ export class LawsuitsService {
                     // With BHT column
                     worksheet.getCell(`A${rowNum}`).value = index + 1;
                     worksheet.getCell(`B${rowNum}`).value = lawsuit.caseNumber;
-                    worksheet.getCell(`C${rowNum}`).value = lawsuit.createdAt
-                        ? formatShortDate(lawsuit.createdAt)
+                    worksheet.getCell(`C${rowNum}`).value = lawsuit.decisionDate
+                        ? formatShortDate(lawsuit.decisionDate)
                         : '';
                     worksheet.getCell(`D${rowNum}`).value = lawsuit.bhtDate
                         ? formatShortDate(lawsuit.bhtDate)
