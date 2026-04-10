@@ -47,7 +47,7 @@ export class LawsuitsController {
     }
 
     @Post('generate')
-    @Roles('panmud-gugatan', 'panmud-permohonan')
+    @Roles('panitera-pengganti', 'panmud-gugatan', 'panmud-permohonan')
     async generate(@Body() body: GenerateExcelDto) {
         const result = await this.lawsuitsService.generateBeritaAcara(body);
         return new StreamableFile(result.payload as any, {
