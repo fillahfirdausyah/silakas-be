@@ -1,4 +1,4 @@
-import { Column, Entity, Index, OneToMany } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { LawsuitEntity } from './lawsuit.entity';
 
@@ -9,7 +9,6 @@ export enum DocumentClassificationType {
 
 @Entity('document_classifications')
 export class DocumentClassificationEntity extends BaseEntity {
-    @Index({ unique: true })
     @Column({
         name: 'name',
         type: 'varchar',
@@ -18,7 +17,6 @@ export class DocumentClassificationEntity extends BaseEntity {
     })
     name: string;
 
-    @Index({ unique: true })
     @Column({
         name: 'code',
         type: 'varchar',
