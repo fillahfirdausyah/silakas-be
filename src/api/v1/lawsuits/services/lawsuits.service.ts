@@ -819,7 +819,11 @@ export class LawsuitsService {
                 : 'A13:G14';
             worksheet.mergeCells(handoverMergeRange);
             const handoverCell = worksheet.getCell('A13');
-            handoverCell.value = `Pihak Pertama menyerahkan berkas perkara kepada pihak Kedua dan Pihak Kedua menyatakan telah menerima dari Pihak Pertama berupa berkas ${typeLabel.toLowerCase()} yang telah berkekuatan hukum tetap, yaitu:`;
+            const handOverUtilText = isPaniteraPengganti
+                ? 'yang telah putus dan minutasi'
+                : 'yang telah berkekuatan hukum tetap';
+            const handoverText = `Pihak Pertama menyerahkan berkas perkara kepada pihak Kedua dan Pihak Kedua menyatakan telah menerima dari Pihak Pertama berupa berkas ${typeLabel.toLowerCase()} ${handOverUtilText}, yaitu:`;
+            handoverCell.value = handoverText;
             handoverCell.alignment = { wrapText: true, vertical: 'top' };
 
             // Row 16: Table header
