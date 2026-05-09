@@ -59,16 +59,21 @@ export class AuthService {
     }
 
     public async login(payload: {
-        email: string;
+        identifier: string;
         password: string;
         rememberMe?: boolean;
         deviceInfo?: string;
         ipAddress?: string;
     }) {
         try {
-            const user = await this.authRepository.findByEmail(payload.email, [
-                'roles',
-            ]);
+            const isEmail = payload.identifier.includes('@');
+            const user = isEmail
+                ? await this.authRepository.findByEmail(payload.identifier, [
+                      'roles',
+                  ])
+                : await this.authRepository.findByUsername(payload.identifier, [
+                      'roles',
+                  ]);
 
             if (!user) {
                 throw new UnauthorizedException('Kredensial tidak valid.');

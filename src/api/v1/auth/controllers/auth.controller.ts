@@ -27,7 +27,7 @@ export class AuthController {
         @Ip() ip: string,
     ) {
         const result = await this.authService.login({
-            email: body.email,
+            identifier: body.identifier,
             password: body.password,
             rememberMe: body.rememberMe ?? false,
             deviceInfo: req.headers['user-agent'],

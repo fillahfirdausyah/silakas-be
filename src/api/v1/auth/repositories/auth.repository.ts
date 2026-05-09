@@ -29,6 +29,13 @@ export class AuthRepository {
         });
     }
 
+    findByUsername(username: string, relations?: string[]) {
+        return this.repository.findOne({
+            where: { username: Equal(username) },
+            relations,
+        });
+    }
+
     findById(id: string) {
         return this.repository.findOne({
             where: { id },

@@ -131,6 +131,16 @@ export class UsersService {
                 user.email = payload.email;
             }
 
+            if (payload.username && payload.username !== user.username) {
+                const usernameOwner = await this.usersRepository.findByUsername(
+                    payload.username,
+                );
+                if (usernameOwner && usernameOwner.id !== user.id) {
+                    throw new ConflictException('Username sudah digunakan');
+                }
+                user.username = payload.username;
+            }
+
             if (payload.fullName) {
                 user.fullName = payload.fullName;
             }
@@ -204,6 +214,7 @@ export class UsersService {
             id: user.id,
             fullName: user.fullName,
             email: user.email,
+            username: user.username ?? null,
             roles:
                 user.roles?.map((role) => ({
                     id: role.id,

@@ -64,6 +64,12 @@ export class UsersRepository {
         });
     }
 
+    findByUsername(username: string) {
+        return this.usersRepository.findOne({
+            where: { username },
+        });
+    }
+
     findById(id: string) {
         return this.usersRepository.findOne({
             where: { id },

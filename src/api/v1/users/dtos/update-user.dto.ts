@@ -31,6 +31,11 @@ export class UpdateUserDto {
     @MinLength(6, { message: 'Password must be at least 6 characters' })
     password?: string;
 
+    @ApiPropertyOptional({ example: 'janedoe' })
+    @IsOptional()
+    @IsString({ message: 'Username must be a string' })
+    username?: string;
+
     @ApiPropertyOptional({ type: [String], format: 'uuid' })
     @IsOptional()
     @IsArray({ message: 'Role ids must be an array' })
