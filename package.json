@@ -24,8 +24,10 @@
         "migration:run": "typeorm-ts-node-commonjs migration:run -d typeorm/config.ts -t all",
         "migration:rollback": "typeorm-ts-node-commonjs migration:revert -d typeorm/config.ts",
         "seeder:run": "ts-node typeorm/seed.ts",
+        "seeder:lawsuits": "ts-node typeorm/seed-lawsuits.ts",
         "migration:run:prod": "typeorm migration:run -d dist/typeorm/config.js -t all",
-        "seeder:run:prod": "node dist/typeorm/seed.js"
+        "seeder:run:prod": "node dist/typeorm/seed.js",
+        "seeder:lawsuits:prod": "node dist/typeorm/seed-lawsuits.js"
     },
     "dependencies": {
         "@nestjs/common": "^10.0.0",
