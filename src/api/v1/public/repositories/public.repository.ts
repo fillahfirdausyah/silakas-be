@@ -104,10 +104,10 @@ export class PublicRepository {
         const qb = this.lawsuitRepo.createQueryBuilder('l');
 
         if (month && year) {
-            qb.andWhere('MONTH(l.created_at) = :month', { month });
-            qb.andWhere('YEAR(l.created_at) = :year', { year });
+            qb.andWhere('MONTH(l.decision_date) = :month', { month });
+            qb.andWhere('YEAR(l.decision_date) = :year', { year });
         } else if (year) {
-            qb.andWhere('YEAR(l.created_at) = :year', { year });
+            qb.andWhere('YEAR(l.decision_date) = :year', { year });
         }
 
         const totalBerkas = await qb.getCount();
@@ -187,10 +187,10 @@ export class PublicRepository {
             .where('l.classification IS NOT NULL');
 
         if (month && year) {
-            qb.andWhere('MONTH(l.created_at) = :month', { month });
-            qb.andWhere('YEAR(l.created_at) = :year', { year });
+            qb.andWhere('MONTH(l.decision_date) = :month', { month });
+            qb.andWhere('YEAR(l.decision_date) = :year', { year });
         } else if (year) {
-            qb.andWhere('YEAR(l.created_at) = :year', { year });
+            qb.andWhere('YEAR(l.decision_date) = :year', { year });
         }
 
         return qb
@@ -203,7 +203,7 @@ export class PublicRepository {
     async getTrendBulanan(year: number) {
         const qb = this.lawsuitRepo
             .createQueryBuilder('l')
-            .select('MONTH(l.created_at)', 'month')
+            .select('MONTH(l.decision_date)', 'month')
             .addSelect(
                 `SUM(CASE WHEN l.type = '${LawsuitType.GUGATAN}' THEN 1 ELSE 0 END)`,
                 'gugatan',
@@ -212,9 +212,12 @@ export class PublicRepository {
                 `SUM(CASE WHEN l.type = '${LawsuitType.PERMOHONAN}' THEN 1 ELSE 0 END)`,
                 'permohonan',
             )
-            .where('YEAR(l.created_at) = :year', { year });
+            .where('YEAR(l.decision_date) = :year', { year });
 
-        qb.groupBy('MONTH(l.created_at)').orderBy('MONTH(l.created_at)', 'ASC');
+        qb.groupBy('MONTH(l.decision_date)').orderBy(
+            'MONTH(l.decision_date)',
+            'ASC',
+        );
 
         return qb.getRawMany();
     }
@@ -234,10 +237,10 @@ export class PublicRepository {
         }
 
         if (month && year) {
-            qb.andWhere('MONTH(l.created_at) = :month', { month });
-            qb.andWhere('YEAR(l.created_at) = :year', { year });
+            qb.andWhere('MONTH(l.decision_date) = :month', { month });
+            qb.andWhere('YEAR(l.decision_date) = :year', { year });
         } else if (year) {
-            qb.andWhere('YEAR(l.created_at) = :year', { year });
+            qb.andWhere('YEAR(l.decision_date) = :year', { year });
         }
 
         return qb.getCount();
@@ -253,10 +256,10 @@ export class PublicRepository {
             .where('l.status IN (:...statuses)', { statuses });
 
         if (month && year) {
-            qb.andWhere('MONTH(l.created_at) = :month', { month });
-            qb.andWhere('YEAR(l.created_at) = :year', { year });
+            qb.andWhere('MONTH(l.decision_date) = :month', { month });
+            qb.andWhere('YEAR(l.decision_date) = :year', { year });
         } else if (year) {
-            qb.andWhere('YEAR(l.created_at) = :year', { year });
+            qb.andWhere('YEAR(l.decision_date) = :year', { year });
         }
 
         return qb.getCount();
@@ -274,10 +277,10 @@ export class PublicRepository {
             });
 
         if (month && year) {
-            qb.andWhere('MONTH(l.created_at) = :month', { month });
-            qb.andWhere('YEAR(l.created_at) = :year', { year });
+            qb.andWhere('MONTH(l.decision_date) = :month', { month });
+            qb.andWhere('YEAR(l.decision_date) = :year', { year });
         } else if (year) {
-            qb.andWhere('YEAR(l.created_at) = :year', { year });
+            qb.andWhere('YEAR(l.decision_date) = :year', { year });
         }
 
         return qb.getCount();
