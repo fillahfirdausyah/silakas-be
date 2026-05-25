@@ -113,4 +113,8 @@ export class UsersRepository {
             },
         });
     }
+
+    softDelete(id: string) {
+        return this.usersRepository.softDelete(id);
+    }
 }

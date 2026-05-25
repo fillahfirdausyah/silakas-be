@@ -1,6 +1,7 @@
 import {
     Body,
     Controller,
+    Delete,
     Get,
     Param,
     Post,
@@ -94,6 +95,17 @@ export class UsersController {
         return {
             message: 'Pengguna berhasil diperbarui',
             payload: result.payload,
+        };
+    }
+
+    @Delete(':id')
+    @Roles('super-admin')
+    async deleteUser(@Param('id') id: string) {
+        await this.usersService.deleteUser(id);
+
+        return {
+            message: 'Pengguna berhasil dihapus',
+            payload: null,
         };
     }
 }

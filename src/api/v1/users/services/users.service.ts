@@ -209,6 +209,24 @@ export class UsersService {
         }
     }
 
+    public async deleteUser(id: string) {
+        try {
+            const user = await this.usersRepository.findById(id);
+            if (!user) {
+                throw new NotFoundException('Pengguna tidak ditemukan');
+            }
+
+            await this.usersRepository.softDelete(id);
+
+            return {
+                payload: null,
+            };
+        } catch (error) {
+            this.logger.error(error.stack || error);
+            handleServiceError(error);
+        }
+    }
+
     private serializeUser(user: UserEntity) {
         return {
             id: user.id,
