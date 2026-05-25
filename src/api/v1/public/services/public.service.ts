@@ -43,16 +43,20 @@ export class PublicService {
         const { month, year } = query;
         const resolvedYear = year ?? new Date().getFullYear();
 
-        const [summary, berkasPerKlasifikasi, trendBulanan] = await Promise.all(
-            [
-                this.publicRepository.getSummary(month, resolvedYear),
-                this.publicRepository.getBerkasPerKlasifikasi(
-                    month,
-                    resolvedYear,
-                ),
-                this.publicRepository.getTrendBulanan(resolvedYear),
-            ],
-        );
+        const [
+            summary,
+            berkasPerKlasifikasi,
+            trendBulanan,
+            bhtHariIni,
+        ] = await Promise.all([
+            this.publicRepository.getSummary(month, resolvedYear),
+            this.publicRepository.getBerkasPerKlasifikasi(
+                month,
+                resolvedYear,
+            ),
+            this.publicRepository.getTrendBulanan(resolvedYear),
+            this.publicRepository.getBhtHariIni(),
+        ]);
 
         const monthNames = [
             'Jan',
@@ -80,6 +84,15 @@ export class PublicService {
             };
         });
 
+        const typeOrder = ['gugatan', 'permohonan'];
+        const bhtLabels = ['Gugatan', 'Permohonan'];
+        const bhtSeries = typeOrder.map((type) => {
+            const found = bhtHariIni.chartData.find(
+                (c: { type: string; count: string }) => c.type === type,
+            );
+            return found ? Number(found.count) : 0;
+        });
+
         return {
             payload: {
                 summary,
@@ -103,6 +116,13 @@ export class PublicService {
                     }),
                 ),
                 trendBulanan: trendFormatted,
+                bhtHariIni: {
+                    chartData: {
+                        labels: bhtLabels,
+                        series: bhtSeries,
+                    },
+                    items: bhtHariIni.items,
+                },
             },
         };
     }

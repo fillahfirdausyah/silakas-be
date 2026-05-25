@@ -19,30 +19,38 @@ export class DashboardService {
         const { month, year, viewAsRole } = query;
         const resolvedYear = year ?? new Date().getFullYear();
 
-        const [summary, berkasPerKlasifikasi, trendBulanan] = await Promise.all(
-            [
-                this.dashboardRepository.getSummary(
-                    month,
-                    resolvedYear,
-                    userId,
-                    roles,
-                    viewAsRole,
-                ),
-                this.dashboardRepository.getBerkasPerKlasifikasi(
-                    month,
-                    resolvedYear,
-                    userId,
-                    roles,
-                    viewAsRole,
-                ),
-                this.dashboardRepository.getTrendBulanan(
-                    resolvedYear,
-                    userId,
-                    roles,
-                    viewAsRole,
-                ),
-            ],
-        );
+        const [
+            summary,
+            berkasPerKlasifikasi,
+            trendBulanan,
+            bhtHariIni,
+        ] = await Promise.all([
+            this.dashboardRepository.getSummary(
+                month,
+                resolvedYear,
+                userId,
+                roles,
+                viewAsRole,
+            ),
+            this.dashboardRepository.getBerkasPerKlasifikasi(
+                month,
+                resolvedYear,
+                userId,
+                roles,
+                viewAsRole,
+            ),
+            this.dashboardRepository.getTrendBulanan(
+                resolvedYear,
+                userId,
+                roles,
+                viewAsRole,
+            ),
+            this.dashboardRepository.getBhtHariIni(
+                userId,
+                roles,
+                viewAsRole,
+            ),
+        ]);
 
         const monthNames = [
             'Jan',
@@ -70,6 +78,15 @@ export class DashboardService {
             };
         });
 
+        const typeOrder = ['gugatan', 'permohonan'];
+        const bhtLabels = ['Gugatan', 'Permohonan'];
+        const bhtSeries = typeOrder.map((type) => {
+            const found = bhtHariIni.chartData.find(
+                (c: { type: string; count: string }) => c.type === type,
+            );
+            return found ? Number(found.count) : 0;
+        });
+
         return {
             payload: {
                 summary,
@@ -93,6 +110,13 @@ export class DashboardService {
                     }),
                 ),
                 trendBulanan: trendFormatted,
+                bhtHariIni: {
+                    chartData: {
+                        labels: bhtLabels,
+                        series: bhtSeries,
+                    },
+                    items: bhtHariIni.items,
+                },
             },
         };
     }

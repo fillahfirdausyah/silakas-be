@@ -286,6 +286,37 @@ export class PublicRepository {
         return qb.getCount();
     }
 
+    async getBhtHariIni() {
+        const today = new Date().toISOString().split('T')[0];
+
+        const itemsQuery = this.lawsuitRepo
+            .createQueryBuilder('l')
+            .select([
+                'l.id',
+                'l.caseNumber',
+                'l.classification',
+                'l.type',
+                'l.bhtDate',
+                'l.status',
+            ])
+            .where('l.bhtDate = :today', { today })
+            .orderBy('l.createdAt', 'DESC');
+
+        const chartQuery = this.lawsuitRepo
+            .createQueryBuilder('l')
+            .select('l.type', 'type')
+            .addSelect('COUNT(*)', 'count')
+            .where('l.bhtDate = :today', { today })
+            .groupBy('l.type');
+
+        const [items, chartData] = await Promise.all([
+            itemsQuery.getMany(),
+            chartQuery.getRawMany(),
+        ]);
+
+        return { items, chartData };
+    }
+
     private async countUpayaHukum(
         month?: number,
         year?: number,
