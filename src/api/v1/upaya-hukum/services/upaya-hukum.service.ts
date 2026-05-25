@@ -356,12 +356,13 @@ export class UpayaHukumService {
                 );
             }
 
-            const upayaHukumList = await this.upayaHukumRepository.findByIds(
-                dto.upayaHukumIds,
-            );
+            const fetchedUpayaHukumList =
+                await this.upayaHukumRepository.findByIds(dto.upayaHukumIds);
 
-            if (upayaHukumList.length !== dto.upayaHukumIds.length) {
-                const foundIds = new Set(upayaHukumList.map((uh) => uh.id));
+            if (fetchedUpayaHukumList.length !== dto.upayaHukumIds.length) {
+                const foundIds = new Set(
+                    fetchedUpayaHukumList.map((uh) => uh.id),
+                );
                 const missingIds = dto.upayaHukumIds.filter(
                     (id) => !foundIds.has(id),
                 );
@@ -369,6 +370,18 @@ export class UpayaHukumService {
                     `Data Upaya Hukum tidak ditemukan: ${missingIds.join(', ')}`,
                 );
             }
+
+            const upayaHukumList = [...fetchedUpayaHukumList].sort((a, b) => {
+                const numA = parseInt(
+                    a.lawsuit?.caseNumber?.split('/')[0] ?? '0',
+                    10,
+                );
+                const numB = parseInt(
+                    b.lawsuit?.caseNumber?.split('/')[0] ?? '0',
+                    10,
+                );
+                return numA - numB;
+            });
 
             // Determine type for title and column header
             const type = upayaHukumList[0]?.type || UpayaHukumType.BANDING;
@@ -390,6 +403,10 @@ export class UpayaHukumService {
                 { width: 18 }, // D: Putus Banding/Putus Kasasi
                 { width: 12 }, // E: Ket
             ];
+
+            worksheet.pageSetup.fitToPage = true;
+            worksheet.pageSetup.fitToWidth = 1;
+            worksheet.pageSetup.fitToHeight = 0;
 
             const thinBorder: Partial<ExcelJS.Borders> = {
                 top: { style: 'thin' },
@@ -417,6 +434,7 @@ export class UpayaHukumService {
             // Rows 4-6: Pihak Pertama info
             worksheet.getCell('B4').value = 'Nama';
             worksheet.getCell('C4').value = `: ${pihakPertama.fullName}`;
+            worksheet.getCell('C4').alignment = { wrapText: true };
             worksheet.getCell('B5').value = 'Jabatan';
             worksheet.getCell('C5').value = ': Panitera Muda Gugatan';
             worksheet.getCell('B6').value = 'Unit Kerja';
@@ -430,6 +448,7 @@ export class UpayaHukumService {
             // Rows 8-10: Pihak Kedua info
             worksheet.getCell('B8').value = 'Nama';
             worksheet.getCell('C8').value = `: ${pihakKedua.fullName}`;
+            worksheet.getCell('C8').alignment = { wrapText: true };
             worksheet.getCell('B9').value = 'Jabatan';
             worksheet.getCell('C9').value = ': Panitera Muda Hukum';
             worksheet.getCell('B10').value = 'Unit Kerja';

@@ -684,12 +684,12 @@ export class LawsuitsService {
                 );
             }
 
-            const lawsuits = await this.lawsuitsRepository.findByIds(
+            const fetchedLawsuits = await this.lawsuitsRepository.findByIds(
                 dto.lawsuitIds,
             );
 
-            if (lawsuits.length !== dto.lawsuitIds.length) {
-                const foundIds = new Set(lawsuits.map((l) => l.id));
+            if (fetchedLawsuits.length !== dto.lawsuitIds.length) {
+                const foundIds = new Set(fetchedLawsuits.map((l) => l.id));
                 const missingIds = dto.lawsuitIds.filter(
                     (id) => !foundIds.has(id),
                 );
@@ -697,6 +697,12 @@ export class LawsuitsService {
                     `Berkas gugatan tidak ditemukan: ${missingIds.join(', ')}`,
                 );
             }
+
+            const lawsuits = [...fetchedLawsuits].sort((a, b) => {
+                const numA = parseInt(a.caseNumber?.split('/')[0] ?? '0', 10);
+                const numB = parseInt(b.caseNumber?.split('/')[0] ?? '0', 10);
+                return numA - numB;
+            });
 
             // Check if requester is panitera-pengganti to exclude BHT column
             const isPaniteraPengganti =
@@ -752,6 +758,10 @@ export class LawsuitsService {
                   ];
             worksheet.columns = columns;
 
+            worksheet.pageSetup.fitToPage = true;
+            worksheet.pageSetup.fitToWidth = 1;
+            worksheet.pageSetup.fitToHeight = 0;
+
             const thinBorder: Partial<ExcelJS.Borders> = {
                 top: { style: 'thin' },
                 left: { style: 'thin' },
@@ -782,6 +792,7 @@ export class LawsuitsService {
             // Rows 4-6: Pihak Pertama info - use fetched user name
             worksheet.getCell('B4').value = 'Nama';
             worksheet.getCell('C4').value = `: ${pihakPertama.fullName}`;
+            worksheet.getCell('C4').alignment = { wrapText: true };
             worksheet.getCell('B5').value = 'Jabatan';
             worksheet.getCell('C5').value =
                 `: ${ROLE_JABATAN_MAPPING[pihakPertamaRole]}`;
@@ -798,6 +809,7 @@ export class LawsuitsService {
             // Rows 8-10: Pihak Kedua info - use fetched user name
             worksheet.getCell('B8').value = 'Nama';
             worksheet.getCell('C8').value = `: ${pihakKedua.fullName}`;
+            worksheet.getCell('C8').alignment = { wrapText: true };
             worksheet.getCell('B9').value = 'Jabatan';
             worksheet.getCell('C9').value =
                 `: ${ROLE_JABATAN_MAPPING[pihakKeduaRole]}`;
