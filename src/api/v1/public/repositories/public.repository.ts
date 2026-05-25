@@ -110,7 +110,17 @@ export class PublicRepository {
             qb.andWhere('YEAR(l.decision_date) = :year', { year });
         }
 
-        const totalBerkas = await qb.getCount();
+        const totalBerkasGugatan = await this.countByCondition(month, year, {
+            type: LawsuitType.GUGATAN,
+        });
+
+        const totalBerkasPermohonan = await this.countByCondition(
+            month,
+            year,
+            {
+                type: LawsuitType.PERMOHONAN,
+            },
+        );
 
         const belumDiserahkanGugatan = await this.countByCondition(
             month,
@@ -152,7 +162,8 @@ export class PublicRepository {
         const upayaHukumAktif = await this.countUpayaHukum(month, year);
 
         return {
-            totalBerkas,
+            totalBerkasGugatan,
+            totalBerkasPermohonan,
             belumDiserahkanGugatan,
             belumDiserahkanPermohonan,
             sudahDiserahkanHukum,

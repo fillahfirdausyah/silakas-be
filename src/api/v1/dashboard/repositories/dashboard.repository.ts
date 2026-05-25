@@ -143,7 +143,23 @@ export class DashboardRepository {
             qb.andWhere('YEAR(l.decision_date) = :year', { year });
         }
 
-        const totalBerkas = await qb.getCount();
+        const totalBerkasGugatan = await this.countByCondition(
+            month,
+            year,
+            userId,
+            roles,
+            viewAsRole,
+            { type: LawsuitType.GUGATAN },
+        );
+
+        const totalBerkasPermohonan = await this.countByCondition(
+            month,
+            year,
+            userId,
+            roles,
+            viewAsRole,
+            { type: LawsuitType.PERMOHONAN },
+        );
 
         const belumDiserahkanGugatan = await this.countByCondition(
             month,
@@ -203,7 +219,8 @@ export class DashboardRepository {
         );
 
         return {
-            totalBerkas,
+            totalBerkasGugatan,
+            totalBerkasPermohonan,
             belumDiserahkanGugatan,
             belumDiserahkanPermohonan,
             sudahDiserahkanHukum,
